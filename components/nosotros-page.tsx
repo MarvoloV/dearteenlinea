@@ -1,0 +1,230 @@
+import Image from "next/image";
+
+import { DearteenlineaLogo } from "@/components/dearteenlinea-logo";
+import { QullqaWordmark } from "@/components/qullqa-wordmark";
+import { qullqaProducts } from "@/lib/qullqa-products";
+import {
+  SITE_INSTAGRAM_DEARTEENLINEA,
+  SITE_INSTAGRAM_QULLQA,
+  SITE_QULLQA_WEB,
+} from "@/lib/site-social";
+import { cn } from "@/lib/utils";
+
+/** Imagen de archivo (reemplazar por foto oficial de Denise cuando exista). */
+const DENISE_PLACEHOLDER_SRC =
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=960&q=85";
+const DENISE_PLACEHOLDER_ALT =
+  "Imagen de referencia; retrato de archivo hasta incorporar fotografía oficial.";
+
+function InstagramLine({
+  label,
+  href,
+}: {
+  label: string;
+  href: string;
+}) {
+  const hasUrl = href.trim().length > 0;
+  return (
+    <p className="text-sm text-muted-foreground">
+      <span className="font-medium text-foreground">{label}</span>
+      {" — "}
+      {hasUrl ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline-offset-4 transition hover:text-foreground hover:underline"
+        >
+          Instagram
+        </a>
+      ) : (
+        <span className="italic">Instagram (enlace próximo)</span>
+      )}
+    </p>
+  );
+}
+
+export function NosotrosPage() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+      <header className="mb-14 max-w-2xl space-y-2">
+        <h1
+          className="text-balance [font-family:var(--font-cormorant)] text-[2rem] font-light leading-[1.15] tracking-[0.02em] text-foreground md:text-[2.65rem]"
+        >
+          <span className="italic text-foreground/90">Nosotros</span>
+        </h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          De Arte en Línea y nuestra colaboración con Qullqa.
+        </p>
+      </header>
+
+      <div className="space-y-14 md:space-y-16">
+        <section
+          className="rounded-2xl border border-border/70 bg-muted/30 p-6 md:p-10"
+          aria-labelledby="nosotros-dearte-heading"
+        >
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border/60 pb-6">
+            <h2
+              id="nosotros-dearte-heading"
+              className="max-w-xl text-balance [font-family:var(--font-cormorant)] text-2xl font-light leading-snug tracking-[0.015em] text-foreground md:text-3xl"
+            >
+              <span className="italic text-foreground/85">De Arte</span>{" "}
+              <span className="font-semibold not-italic">en Línea</span>
+            </h2>
+            <div className="shrink-0 opacity-90">
+              <DearteenlineaLogo className="h-9 md:h-10" alt="" />
+            </div>
+          </div>
+
+          <div className="grid gap-10 md:grid-cols-2 md:gap-12 md:items-start">
+            <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem]">
+              <p>
+                <strong className="font-medium text-foreground">
+                  De Arte en Línea
+                </strong>{" "}
+                es la primera plataforma del Perú para la difusión y venta online
+                de obras de arte moderno y contemporáneo. Lanzada en 2012 por{" "}
+                <strong className="font-medium text-foreground">
+                  Denise Dourojeanni
+                </strong>
+                .
+              </p>
+              <p>
+                La plataforma busca ofrecer una gama amplia de obras en
+                distintos medios y de artistas en diferentes etapas de su
+                carrera: desde nombres consolidados en el circuito local e
+                internacional hasta artistas con proyección profesional y
+                talentos jóvenes al inicio de su trayectoria.
+              </p>
+              <InstagramLine
+                label="dearteenlinea"
+                href={SITE_INSTAGRAM_DEARTEENLINEA}
+              />
+            </div>
+
+            <figure className="overflow-hidden rounded-xl border border-border/60 bg-background shadow-sm">
+              <div className="relative aspect-[4/5] w-full">
+                <Image
+                  src={DENISE_PLACEHOLDER_SRC}
+                  alt={DENISE_PLACEHOLDER_ALT}
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  unoptimized
+                />
+              </div>
+              <figcaption className="border-t border-border/60 px-4 py-3 text-center text-xs italic text-muted-foreground">
+                Espacio reservado para fotografía oficial de Denise.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section
+          className="rounded-2xl border border-border/70 bg-background p-6 md:p-10"
+          aria-labelledby="nosotros-qullqa-heading"
+        >
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border/60 pb-6">
+            <h2
+              id="nosotros-qullqa-heading"
+              className={cn(
+                "max-w-2xl text-balance text-xl font-medium leading-snug tracking-tight text-foreground md:text-2xl",
+                "[font-family:var(--font-manrope)]",
+              )}
+            >
+              Colaboración con{" "}
+              <QullqaWordmark className="text-2xl md:text-[1.65rem]" />
+            </h2>
+          </div>
+
+          <div className="space-y-6 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem]">
+            <p>
+              <strong className="font-medium text-foreground">
+                dearteenlinea
+              </strong>{" "}
+              trabaja junto a Qullqa para dar mayor visibilidad a artistas y
+              obras, conectando la curaduría de la galería con la tecnología que
+              impulsa a la comunidad artística.
+            </p>
+            <p>
+              <QullqaWordmark /> es una plataforma pensada para{" "}
+              <strong className="font-medium text-foreground">
+                coleccionistas
+              </strong>{" "}
+              y{" "}
+              <strong className="font-medium text-foreground">artistas</strong>
+              : centraliza la gestión de obras y colecciones y reduce fricciones
+              en el día a día. Quienes publican desde Qullqa pueden mostrar
+              parte de su trabajo al público en{" "}
+              <strong className="font-medium text-foreground">
+                qullqa gallery
+              </strong>
+              , el espacio abierto donde esta web también participa.
+            </p>
+            <p>
+              Qullqa ofrece dos líneas de producto:{" "}
+              <strong className="font-medium text-foreground">
+                Qullqa Collector
+              </strong>
+              , orientada a quienes coleccionan, y{" "}
+              <strong className="font-medium text-foreground">
+                Qullqa Studio
+              </strong>
+              , para quienes crean y gestionan su obra desde el estudio.
+            </p>
+
+            <p className="pt-1">
+              <a
+                href={SITE_QULLQA_WEB}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline-offset-4 transition hover:underline"
+              >
+                Sitio web Qullqa
+              </a>
+              <span className="text-muted-foreground"> · </span>
+              <span className="text-muted-foreground">qullqa.art</span>
+            </p>
+
+            <InstagramLine label="Qullqa" href={SITE_INSTAGRAM_QULLQA} />
+
+            <ul className="grid gap-4 pt-4 sm:grid-cols-2">
+              {qullqaProducts.map((product) => (
+                <li key={product.href}>
+                  <a
+                    href={product.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex h-full flex-col rounded-xl border border-border/80 bg-muted/20 p-5 transition hover:border-border hover:bg-muted/40"
+                  >
+                    <span
+                      className={cn(
+                        "mb-1 text-base font-medium text-foreground",
+                        "[font-family:var(--font-manrope)]",
+                      )}
+                    >
+                      {product.name}
+                      <span className="ml-1 text-muted-foreground transition group-hover:text-foreground">
+                        →
+                      </span>
+                    </span>
+                    <span className="mb-3 flex-1 text-sm leading-relaxed text-muted-foreground [font-family:var(--font-manrope)]">
+                      {product.description}
+                    </span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-primary underline-offset-4 group-hover:underline">
+                      Ver producto
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            <p className="pt-2 text-xs italic text-muted-foreground">
+              Los enlaces abren en una nueva pestaña.
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

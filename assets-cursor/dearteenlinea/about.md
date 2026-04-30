@@ -1,0 +1,3 @@
+# De Arte en Línea
+
+Es la primera plataforma del Perú para la difusión y venta online de obras arte moderno y contemporáneo. Lanzada en 2012, por Denise Dourojeanni. La plataforma busca ofrecer una gama amplia de obras en diferentes medios y de distintos artistas en distintas etapas de su carrera, sean artistas bien establecidos en el circuito local e internacional, o artistas con proyección profesional, así como artistas jóvenes en la etapa inicial de su carrera.
