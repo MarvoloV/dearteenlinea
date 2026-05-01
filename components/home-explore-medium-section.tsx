@@ -14,6 +14,8 @@ type HomeExploreByMediumSectionProps = {
   flow: HomeFlow;
   basePath: "/dearteenlinea" | "/qullqa-gallery";
   variant: HomePastelVariant;
+  mediums?: readonly HomeExploreMedium[];
+  queryParamName?: "medio" | "medium";
 };
 
 type BentoDef = {
@@ -38,16 +40,32 @@ function bentoForCount(n: number): BentoDef | null {
   return null;
 }
 
+export type HomeExploreMedium = {
+  slug?: string;
+  label: string;
+  artworkCount?: number;
+};
+
+function defaultMediumsForFlow(flow: HomeFlow): HomeExploreMedium[] {
+  return mediumsForFlow(flow).map((label) => ({ label }));
+}
+
+function artworkCountLabel(count: number): string {
+  return count === 1 ? "1 obra" : `${count} obras`;
+}
+
 function MediumCard({
   href,
   src,
   label,
+  artworkCount,
   manrope,
   variant,
 }: {
   href: string;
   src: string;
   label: string;
+  artworkCount?: number;
   manrope: boolean;
   /** `fill`: ocupa toda la celda del grid (laterales que cruzan 2 filas). `ratio`: proporción fija 3/2. */
   variant: "fill" | "ratio";
@@ -93,8 +111,15 @@ function MediumCard({
           "md:group-hover:opacity-100 md:group-focus-visible:opacity-100",
         )}
       >
-        <span className="min-w-0 text-lg font-medium leading-snug tracking-tight drop-shadow-md [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] md:text-xl md:leading-tight">
-          {label}
+        <span className="min-w-0">
+          <span className="block text-lg font-medium leading-snug tracking-tight drop-shadow-md [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] md:text-xl md:leading-tight">
+            {label}
+          </span>
+          {typeof artworkCount === "number" ? (
+            <span className="mt-0.5 block text-xs font-medium text-white/85 drop-shadow-md">
+              {artworkCountLabel(artworkCount)}
+            </span>
+          ) : null}
         </span>
         <span
           className="shrink-0 text-xl text-white/95 transition duration-200 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)] md:text-2xl"
@@ -112,10 +137,14 @@ export function HomeExploreByMediumSection({
   flow,
   basePath,
   variant,
+  mediums,
+  queryParamName = "medio",
 }: HomeExploreByMediumSectionProps) {
-  const mediums = mediumsForFlow(flow);
+  const mediumItems = mediums ?? defaultMediumsForFlow(flow);
   const manrope = flow === "qullqa-gallery";
-  const bento = bentoForCount(mediums.length);
+  const bento = bentoForCount(mediumItems.length);
+
+  if (mediumItems.length === 0) return null;
 
   return (
     <HomePastelSection variant={variant}>
@@ -135,15 +164,17 @@ export function HomeExploreByMediumSection({
       {bento ? (
         <>
           <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 md:hidden">
-            {mediums.map((m) => {
-              const href = `${basePath}/obras?medio=${encodeURIComponent(m)}`;
-              const src = mediumCardImage(flow, m);
+            {mediumItems.map((m) => {
+              const queryValue = m.slug ?? m.label;
+              const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
+              const src = mediumCardImage(flow, m.label);
               return (
-                <li key={m} className="min-w-0">
+                <li key={queryValue} className="min-w-0">
                   <MediumCard
                     href={href}
                     src={src}
-                    label={m}
+                    label={m.label}
+                    artworkCount={m.artworkCount}
                     manrope={manrope}
                     variant="ratio"
                   />
@@ -156,19 +187,20 @@ export function HomeExploreByMediumSection({
             style={{
               gridTemplateAreas: bento.template,
               gridTemplateRows:
-                mediums.length === 10
+                mediumItems.length === 10
                   ? "minmax(0, auto) minmax(0, auto) minmax(0, auto) minmax(0, auto)"
                   : "minmax(0, auto) minmax(0, auto) minmax(0, auto)",
             }}
           >
-            {mediums.map((m, i) => {
-              const href = `${basePath}/obras?medio=${encodeURIComponent(m)}`;
-              const src = mediumCardImage(flow, m);
+            {mediumItems.map((m, i) => {
+              const queryValue = m.slug ?? m.label;
+              const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
+              const src = mediumCardImage(flow, m.label);
               const area = bento.areaByIndex[i] ?? "auto";
               const isFill = area === "a" || area === "d";
               return (
                 <li
-                  key={m}
+                  key={queryValue}
                   className={cn(
                     "min-h-0 min-w-0 overflow-hidden",
                     isFill && "flex min-h-0 flex-col",
@@ -178,7 +210,8 @@ export function HomeExploreByMediumSection({
                   <MediumCard
                     href={href}
                     src={src}
-                    label={m}
+                    label={m.label}
+                    artworkCount={m.artworkCount}
                     manrope={manrope}
                     variant={isFill ? "fill" : "ratio"}
                   />
@@ -189,15 +222,17 @@ export function HomeExploreByMediumSection({
         </>
       ) : (
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
-          {mediums.map((m) => {
-            const href = `${basePath}/obras?medio=${encodeURIComponent(m)}`;
-            const src = mediumCardImage(flow, m);
+          {mediumItems.map((m) => {
+            const queryValue = m.slug ?? m.label;
+            const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
+            const src = mediumCardImage(flow, m.label);
             return (
-              <li key={m} className="min-w-0">
+              <li key={queryValue} className="min-w-0">
                 <MediumCard
                   href={href}
                   src={src}
-                  label={m}
+                  label={m.label}
+                  artworkCount={m.artworkCount}
                   manrope={manrope}
                   variant="ratio"
                 />

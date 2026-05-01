@@ -4,14 +4,7 @@ import type { Metadata } from "next";
 import { ArtworkDetail } from "@/components/artwork-detail";
 import { FlowHeader } from "@/components/flow-header";
 import { artistFullName } from "@/lib/artist-utils";
-import { mockArtistsQullqaGallery } from "@/lib/mock-artists";
-import { mockArtworksQullqaGallery } from "@/lib/mock-artworks-qullqa-gallery";
-import {
-  artistBySlug,
-  artworkBySlug,
-  otherArtworksSameArtist,
-  otherArtworksSameMedium,
-} from "@/lib/artwork-utils";
+import { fetchQullqaGalleryArtworkDetail } from "@/lib/qullqa-gallery-api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -21,12 +14,12 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const artwork = artworkBySlug(mockArtworksQullqaGallery, slug);
-  if (!artwork) {
+  const detail = await fetchQullqaGalleryArtworkDetail(slug);
+  if (!detail.ok) {
     return { title: "Obra" };
   }
-  const artist = artistBySlug(mockArtistsQullqaGallery, artwork.artistSlug);
-  const name = artist ? artistFullName(artist) : "Artista";
+  const { artwork, artist } = detail.data;
+  const name = artistFullName(artist);
   const desc =
     artwork.description?.slice(0, 160) ??
     `${artwork.title} · ${name} · qullqa gallery`;
@@ -38,38 +31,34 @@ export async function generateMetadata({
 
 export default async function QullqaGalleryObraPage({ params }: PageProps) {
   const { slug } = await params;
-  const artwork = artworkBySlug(mockArtworksQullqaGallery, slug);
-  if (!artwork) notFound();
-
-  const artist = artistBySlug(mockArtistsQullqaGallery, artwork.artistSlug);
-  if (!artist) notFound();
-
-  const relatedByMedium = otherArtworksSameMedium(mockArtworksQullqaGallery, {
-    slug: artwork.slug,
-    medium: artwork.medium,
-  });
-  const relatedByArtistRaw = otherArtworksSameArtist(mockArtworksQullqaGallery, {
-    slug: artwork.slug,
-    artistSlug: artwork.artistSlug,
-  });
-  const relatedByArtist = relatedByArtistRaw.filter(
-    (a) => !relatedByMedium.some((m) => m.slug === a.slug),
-  );
+  const detail = await fetchQullqaGalleryArtworkDetail(slug);
+  if (!detail.ok && detail.notFound) notFound();
 
   return (
     <>
       <FlowHeader variant="qullqa-gallery" />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
-          <ArtworkDetail
-            artwork={artwork}
-            artist={artist}
-            artists={mockArtistsQullqaGallery}
-            relatedByMedium={relatedByMedium}
-            relatedByArtist={relatedByArtist}
-            basePath="/qullqa-gallery"
-            flow="qullqa-gallery"
-          />
+          {detail.ok ? (
+            <ArtworkDetail
+              artwork={detail.data.artwork}
+              artist={detail.data.artist}
+              artists={detail.data.artists}
+              relatedByMedium={detail.data.relatedByMedium}
+              relatedByArtist={detail.data.relatedByArtist}
+              basePath="/qullqa-gallery"
+              flow="qullqa-gallery"
+            />
+          ) : (
+            <div className="space-y-6 [font-family:var(--font-manrope)]">
+              <h1 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+                Obra
+              </h1>
+              <p className="rounded-lg border border-border/70 bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
+                No se pudo cargar esta obra pública de qullqa gallery.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </>

@@ -16,6 +16,8 @@ export function artistBySlug(
 
 export function artistDisplayName(artist: Artist | undefined): string {
   if (!artist) return "";
+  const displayName = artist.displayName?.trim();
+  if (displayName) return displayName;
   return `${artist.firstName} ${artist.lastName}`.trim();
 }
 

@@ -8,9 +8,11 @@ import {
 import { FlowHeaderMobileDrawer } from "@/components/flow-header-mobile-drawer";
 import { FlowHeaderSearch } from "@/components/flow-header-search";
 import { QullqaWordmark } from "@/components/qullqa-wordmark";
-import { mockArtistsDearteenlinea, mockArtistsQullqaGallery } from "@/lib/mock-artists";
+import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
 import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
-import { mockArtworksQullqaGallery } from "@/lib/mock-artworks-qullqa-gallery";
+import { fetchQullqaGallerySearchIndex } from "@/lib/qullqa-gallery-api";
+import type { Artist } from "@/lib/types/artist";
+import type { Artwork } from "@/lib/types/artwork";
 import { cn } from "@/lib/utils";
 
 export type { FlowHeaderVariant };
@@ -19,10 +21,17 @@ type FlowHeaderProps = {
   variant: FlowHeaderVariant;
 };
 
-export function FlowHeader({ variant }: FlowHeaderProps) {
+export async function FlowHeader({ variant }: FlowHeaderProps) {
   const dearte = variant === "dearteenlinea";
-  const artists = dearte ? mockArtistsDearteenlinea : mockArtistsQullqaGallery;
-  const artworks = dearte ? mockArtworksDearteenlinea : mockArtworksQullqaGallery;
+  let artists: Artist[] = mockArtistsDearteenlinea;
+  let artworks: Artwork[] = mockArtworksDearteenlinea;
+
+  if (!dearte) {
+    const searchIndex = await fetchQullqaGallerySearchIndex();
+    artists = searchIndex.ok ? searchIndex.data.artists : [];
+    artworks = searchIndex.ok ? searchIndex.data.artworks : [];
+  }
+
   const qullqa = variant === "qullqa-gallery";
 
   const desktopBrand = dearte ? (

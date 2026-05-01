@@ -7,8 +7,9 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import {
   ALPHABET_LETTERS,
+  artistFullName,
   lastNameIndexLetter,
-  matchesArtistSearch,
+  matchesArtistQuery,
 } from "@/lib/artist-utils";
 import type { Artist } from "@/lib/types/artist";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,10 @@ function artistInitials(firstName: string, lastName: string): string {
   const a = firstName.trim()[0] ?? "";
   const b = lastName.trim()[0] ?? "";
   return `${a}${b}`.toUpperCase() || "?";
+}
+
+function artistIndexLetter(artist: Artist): string {
+  return lastNameIndexLetter(artist.lastName || artist.firstName);
 }
 
 type ArtistCatalogProps = {
@@ -42,19 +47,17 @@ export function ArtistCatalog({
 
   const byLetter = useMemo(() => {
     if (letter === null) return artists;
-    return artists.filter((a) => lastNameIndexLetter(a.lastName) === letter);
+    return artists.filter((a) => artistIndexLetter(a) === letter);
   }, [artists, letter]);
 
   const filtered = useMemo(() => {
-    return byLetter.filter((a) =>
-      matchesArtistSearch(a.firstName, a.lastName, search),
-    );
+    return byLetter.filter((a) => matchesArtistQuery(a, search));
   }, [byLetter, search]);
 
   const countsByLetter = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of artists) {
-      const L = lastNameIndexLetter(a.lastName);
+      const L = artistIndexLetter(a);
       if (L === "#") continue;
       m.set(L, (m.get(L) ?? 0) + 1);
     }
@@ -150,7 +153,7 @@ export function ArtistCatalog({
                   {artist.imageUrl ? (
                     <Image
                       src={artist.imageUrl}
-                      alt={`Retrato de ${artist.firstName} ${artist.lastName}`}
+                      alt={`Retrato de ${artistFullName(artist)}`}
                       fill
                       unoptimized
                       className="object-cover transition duration-500 group-hover:scale-[1.02]"
@@ -171,7 +174,7 @@ export function ArtistCatalog({
                       nameClassName,
                     )}
                   >
-                    {artist.firstName} {artist.lastName}
+                    {artistFullName(artist)}
                   </span>
                 </div>
               </Link>

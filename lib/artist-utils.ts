@@ -32,6 +32,16 @@ export function matchesArtistSearch(
   return full.includes(q) || first.includes(q) || last.includes(q);
 }
 
+export function matchesArtistQuery(artist: Artist, rawQuery: string): boolean {
+  const q = stripDiacritics(rawQuery.trim().toLowerCase());
+  if (!q) return true;
+  const display = stripDiacritics((artist.displayName ?? "").toLowerCase());
+  return (
+    display.includes(q) ||
+    matchesArtistSearch(artist.firstName, artist.lastName, rawQuery)
+  );
+}
+
 export function artistBySlugFromList(
   artists: Artist[],
   slug: string,
@@ -47,6 +57,8 @@ export function artworksByArtistSlug(
 }
 
 export function artistFullName(artist: Artist): string {
+  const displayName = artist.displayName?.trim();
+  if (displayName) return displayName;
   return `${artist.firstName} ${artist.lastName}`.trim();
 }
 

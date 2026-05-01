@@ -21,6 +21,8 @@ export type ArtistPurchaseContact = {
 /** Modelo completo para futuro detalle; el catálogo usa solo nombre, apellido, imagen y slug. */
 export type Artist = {
   slug: string;
+  /** Nombre público ya compuesto cuando viene de una API externa. */
+  displayName?: string | null;
   firstName: string;
   lastName: string;
   imageUrl?: string | null;

@@ -1,6 +1,6 @@
 import {
   artistFullName,
-  matchesArtistSearch,
+  matchesArtistQuery,
   stripDiacritics,
 } from "@/lib/artist-utils";
 import type { Artist } from "@/lib/types/artist";
@@ -26,9 +26,7 @@ function matchesArtworkSearch(artwork: Artwork, rawQuery: string): boolean {
 export function searchArtistsInFlow(artists: Artist[], rawQuery: string): Artist[] {
   const q = rawQuery.trim();
   if (!q) return [];
-  const filtered = artists.filter((a) =>
-    matchesArtistSearch(a.firstName, a.lastName, q),
-  );
+  const filtered = artists.filter((a) => matchesArtistQuery(a, q));
   return [...filtered].sort((a, b) =>
     artistFullName(a).localeCompare(artistFullName(b), "es", {
       sensitivity: "base",
