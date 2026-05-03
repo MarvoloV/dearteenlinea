@@ -1,0 +1,52 @@
+---
+description: Marcas dearteenlinea y qullqa, flujos y rutas del sitio
+alwaysApply: true
+---
+
+# Marcas y flujos
+
+## dearteenlinea
+
+Galería web con obras **curadas**: artistas consolidados, artistas jóvenes y arte de **mercado secundario**. La curaduría garantiza calidad para los visitantes.
+
+## qullqa y qullqa gallery
+
+**Qullqa** es la plataforma (artistas y coleccionistas) para gestionar obras. Quienes usan qullqa pueden publicar obras visibles al público en **qullqa gallery**.
+
+En este sitio, “qullqa gallery” es el flujo que muestra ese escaparate público; no confundir con la app de gestión completa de Qullqa.
+
+## Rutas
+
+- `/` — Entrada: elección de flujo (path selector).
+- `/dearteenlinea` — Home: header + hero; secciones con fondo pastel (`HomePastelSection`): **Últimas obras** (carril horizontal, hasta 5, desde API WordPress Dearte con mocks como fallback), **Explorar por medio** (medios e imágenes desde API WordPress Dearte, mocks como fallback), tres bloques por categoría de curaduría desde API WordPress Dearte (mercado secundario, consolidados, emergentes; hasta 5 por bloque, mocks por bloque como fallback) con carril y enlace «Ver todas» con `?categoria=`. Componentes en `components/home-*.tsx`.
+- `/dearteenlinea/artistas` — Catálogo de artistas (mockeado): grilla nombre + foto, filtro A–Z por apellido; enlace a `/dearteenlinea/artistas/[slug]`.
+- `/dearteenlinea/artistas/[slug]` — Ficha de artista: datos del modelo `Artist` (bio, nacionalidad, fecha, web, redes), compartir (modal: X, Facebook, WhatsApp, copiar URL), sección **Obras** con `ArtworkCard` hacia `/dearteenlinea/obras/[slug]`.
+- `/dearteenlinea/obras` — Catálogo de obras (mockeado): buscador, filtros (categoría de curaduría solo en este flujo, medio, técnica, precio), tarjetas con carrusel de medios; enlace a `/dearteenlinea/obras/[slug]`. Query opcional: `?medio=` (valor exacto del medio) y `?categoria=` (`mercado_secundario` \| `emergentes` \| `consolidados`) para preseleccionar filtros (`ArtworkCatalog` + [`lib/artwork-catalog-url.ts`](lib/artwork-catalog-url.ts)).
+- `/dearteenlinea/obras/[slug]` — Ficha de obra: carrusel de imágenes/vídeos (`ArtworkMediaViewer`), strip del artista (foto + enlace a su ficha), metadatos (incl. curaduría si aplica), **Contactar para compra** (modal formulario con mensaje prellenado; envío solo visual) y **Compartir** (modal como en artista); secciones opcionales **Otras obras del mismo medio** y **Otras obras del mismo artista** (hasta 5 cada una) + enlace al detalle del artista.
+- `/qullqa-gallery` — Home: header + hero (CTA a qullqa); **Últimas obras** y **Explorar por medio** (misma lógica que dearteenlinea, Manrope); al final **Herramientas Qullqa** (`QullqaProductsSection`).
+- `/qullqa-gallery/artistas` — Igual criterio de catálogo que dearteenlinea; datos mock en `lib/mock-artists.ts`.
+- `/qullqa-gallery/artistas/[slug]` — Misma ficha que dearteenlinea con tipografía Manrope; obras desde `lib/mock-artworks-qullqa-gallery.ts`.
+- `/qullqa-gallery/obras` — Catálogo de obras con la misma estructura que dearteenlinea (sin filtro de categoría de curaduría); mocks en `lib/mock-artworks-qullqa-gallery.ts`; enlace a `/qullqa-gallery/obras/[slug]`. Query opcional: `?medio=`.
+
+## Listados “últimas obras”
+
+En [`lib/types/artwork.ts`](lib/types/artwork.ts), `addedAt` (ISO) ordena los listados; [`latestArtworks`](lib/artwork-utils.ts) y [`latestArtworksInCategory`](lib/artwork-utils.ts) para home y bloques por categoría.
+- `/qullqa-gallery/obras/[slug]` — Misma ficha de obra que dearteenlinea con Manrope; **Contactar para compra**: si el `Artist` tiene `purchaseContact` con al menos uno de email, celular, web o instagram (`lib/types/artist.ts`), modal informativo **Contacta para compra** (mailto, WhatsApp con mensaje prearmado, enlaces); si no, mismo formulario que dearteenlinea. Opcional `purchaseContact.contactName` en el modal informativo.
+
+## Modelo de contacto para compra (qullqa gallery)
+
+En `Artist`, `purchaseContact` agrupa datos opcionales para compra (independientes del perfil público). La UI del detalle de obra usa `hasQullqaPurchaseChannels` (`lib/artist-utils.ts`) para elegir modal informativo vs formulario.
+
+En ambos flujos el header incluye enlaces **Artistas** y **Obras** hacia las rutas de catálogo correspondientes.
+
+## Idioma
+
+UI y copy orientado a **español** salvo que el producto pida otro idioma.
+
+## Fuente canónica de copy
+
+Definiciones largas y texto de negocio: [assets-cursor/definicion-marcas.md](assets-cursor/definicion-marcas.md). Si cambia el mensaje de marca, actualizar ahí y alinear reglas.
+
+## Mantenimiento
+
+Si cambian rutas, nombres de flujo o mensaje de marca, actualizar este archivo y `definicion-marcas.md`.

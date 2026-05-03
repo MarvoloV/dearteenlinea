@@ -1,0 +1,35 @@
+---
+description: Principios UI/UX, tipografía, logos y marca visual del proyecto
+alwaysApply: true
+---
+
+# Diseño y UX
+
+## Principios
+
+- **Minimalista**: mucho aire, pocos elementos, sin ruido; tono **arte / colección + producto tech**.
+- **Mobile-first**: layout y toque primero en móvil; desktop como ampliación.
+- **Accesibilidad**: foco visible, contraste razonable (especialmente texto sobre imágenes con overlay).
+
+## Tipografía
+
+- **Roboto** (`--font-roboto`): cuerpo y UI general; `font-sans` por defecto.
+- **Manrope** (`--font-manrope`): wordmark **qullqa** y textos donde la marca qullqa deba distinguirse (p. ej. cabecera qullqa gallery).
+
+## Logos
+
+- **Dearteenlinea**: SVG en [public/dearteenlinea-logo.svg](public/dearteenlinea-logo.svg). Usar componente [components/dearteenlinea-logo.tsx](components/dearteenlinea-logo.tsx). Sobre fondos oscuros usar prop `inverted` (filtro) para legibilidad.
+- **Qullqa**: wordmark tipográfico en minúsculas: `qullqa` con Manrope ([components/qullqa-wordmark.tsx](components/qullqa-wordmark.tsx)), no logo gráfico salvo que se añada uno.
+
+## Headers por flujo
+
+- **dearteenlinea**: solo logo Dearteenlinea a la izquierda.
+- **qullqa gallery**: `qullqa` + “by” + logo Dearteenlinea **junto al wordmark** (misma línea / grupo), no disperso a los extremos.
+
+## Imágenes
+
+Stock (p. ej. Unsplash) para fondos o ilustración: ver [next.config.ts](next.config.ts) (`images.remotePatterns`). Preferir fotos que connoten **arte u obra**, no solo interiorismo genérico; validar que la URL del CDN responda (algunos IDs antiguos dan 404).
+
+## Mantenimiento
+
+Si cambian sistema de diseño, fuentes, rutas de assets o patrones de cabecera, actualizar este archivo y los componentes citados.

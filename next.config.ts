@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         hostname: "studio.qullqa.art",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "dearteenlinea.com",
+        pathname: "/wp-content/uploads/**",
+      },
     ],
   },
 };

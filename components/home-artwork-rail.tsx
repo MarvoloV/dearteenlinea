@@ -109,6 +109,8 @@ export function HomeArtworkRail({
     >
       {artworks.map((artwork) => {
         const artist = artistBySlug(artists, artwork.artistSlug);
+        const href =
+          artwork.externalUrl?.trim() || `${basePath}/obras/${artwork.slug}`;
         return (
           <li
             key={artwork.slug}
@@ -120,7 +122,8 @@ export function HomeArtworkRail({
             <ArtworkCard
               artwork={artwork}
               artistName={artistDisplayName(artist)}
-              href={`${basePath}/obras/${artwork.slug}`}
+              href={href}
+              artistHref={artist?.web}
               nameClassName={nameClassName}
             />
           </li>

@@ -4,7 +4,6 @@ import {
   HomePastelSection,
   type HomePastelVariant,
 } from "@/components/home-pastel-section";
-import { latestArtworksInCategory } from "@/lib/artwork-utils";
 import type { Artist } from "@/lib/types/artist";
 import type { Artwork, ArtworkDearteCategory } from "@/lib/types/artwork";
 import type { ReactNode } from "react";
@@ -49,19 +48,18 @@ function categoryTitleArtistic(category: ArtworkDearteCategory): ReactNode {
 
 type HomeDearteCategorySectionProps = {
   category: ArtworkDearteCategory;
-  allArtworks: Artwork[];
+  artworks: Artwork[];
   artists: Artist[];
   variant: HomePastelVariant;
 };
 
 export function HomeDearteCategorySection({
   category,
-  allArtworks,
+  artworks,
   artists,
   variant,
 }: HomeDearteCategorySectionProps) {
-  const list = latestArtworksInCategory(allArtworks, category, 5);
-  if (list.length === 0) return null;
+  if (artworks.length === 0) return null;
 
   return (
     <HomePastelSection variant={variant}>
@@ -74,7 +72,7 @@ export function HomeDearteCategorySection({
         }}
       />
       <HomeArtworkRail
-        artworks={list}
+        artworks={artworks}
         artists={artists}
         basePath="/dearteenlinea"
       />

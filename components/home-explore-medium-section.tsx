@@ -25,6 +25,12 @@ type BentoDef = {
 };
 
 function bentoForCount(n: number): BentoDef | null {
+  if (n === 6) {
+    return {
+      template: `"a b d" "a c d" "e f f"`,
+      areaByIndex: ["a", "b", "c", "d", "e", "f"],
+    };
+  }
   if (n === 7) {
     return {
       template: `"a b d" "a c d" "e f g"`,
@@ -43,6 +49,8 @@ function bentoForCount(n: number): BentoDef | null {
 export type HomeExploreMedium = {
   slug?: string;
   label: string;
+  imageUrl?: string | null;
+  href?: string | null;
   artworkCount?: number;
 };
 
@@ -52,6 +60,22 @@ function defaultMediumsForFlow(flow: HomeFlow): HomeExploreMedium[] {
 
 function artworkCountLabel(count: number): string {
   return count === 1 ? "1 obra" : `${count} obras`;
+}
+
+function mediumHref(
+  medium: HomeExploreMedium,
+  basePath: HomeExploreByMediumSectionProps["basePath"],
+  queryParamName: NonNullable<HomeExploreByMediumSectionProps["queryParamName"]>,
+): string {
+  const externalHref = medium.href?.trim();
+  if (externalHref) return externalHref;
+
+  const queryValue = medium.slug ?? medium.label;
+  return `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
+}
+
+function mediumImage(flow: HomeFlow, medium: HomeExploreMedium): string {
+  return medium.imageUrl?.trim() || mediumCardImage(flow, medium.label);
 }
 
 function MediumCard({
@@ -166,8 +190,8 @@ export function HomeExploreByMediumSection({
           <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 md:hidden">
             {mediumItems.map((m) => {
               const queryValue = m.slug ?? m.label;
-              const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
-              const src = mediumCardImage(flow, m.label);
+              const href = mediumHref(m, basePath, queryParamName);
+              const src = mediumImage(flow, m);
               return (
                 <li key={queryValue} className="min-w-0">
                   <MediumCard
@@ -194,8 +218,8 @@ export function HomeExploreByMediumSection({
           >
             {mediumItems.map((m, i) => {
               const queryValue = m.slug ?? m.label;
-              const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
-              const src = mediumCardImage(flow, m.label);
+              const href = mediumHref(m, basePath, queryParamName);
+              const src = mediumImage(flow, m);
               const area = bento.areaByIndex[i] ?? "auto";
               const isFill = area === "a" || area === "d";
               return (
@@ -224,8 +248,8 @@ export function HomeExploreByMediumSection({
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
           {mediumItems.map((m) => {
             const queryValue = m.slug ?? m.label;
-            const href = `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
-            const src = mediumCardImage(flow, m.label);
+            const href = mediumHref(m, basePath, queryParamName);
+            const src = mediumImage(flow, m);
             return (
               <li key={queryValue} className="min-w-0">
                 <MediumCard

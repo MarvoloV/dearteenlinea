@@ -1,0 +1,16 @@
+---
+description: Mantener actualizado el contexto del proyecto (reglas y assets)
+alwaysApply: true
+---
+
+# Mantenimiento del contexto
+
+Al implementar algo que cambie **producto, marca, rutas, UX, stack o convenciones**:
+
+1. Actualizar la regla `.mdc` afectada en [.cursor/rules/](.cursor/rules/) (`project-brands-and-flows`, `project-design-and-ux`, `project-stack-and-structure`).
+2. Si cambia el texto de negocio o definiciones de marca, actualizar [assets-cursor/definicion-marcas.md](assets-cursor/definicion-marcas.md) (fuente canónica de copy) **antes o junto** con el código.
+3. No dejar solo el código como documentación: las reglas existen para que futuras sesiones y agentes no asuman información obsoleta.
+
+**Cuándo actualizar**: nueva ruta; nuevo componente de marca; cambio de fuentes o logos; copy o CTA de los heroes por flujo; enlaces de productos Qullqa; nueva integración (API, CMS, analítica); decisión de diseño que afecte a más de un archivo.
+
+**Referencias**: las otras reglas en `.cursor/rules/` y [AGENTS.md](AGENTS.md).
