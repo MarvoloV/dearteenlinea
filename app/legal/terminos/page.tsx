@@ -29,7 +29,7 @@ export default async function TerminosPage() {
         </Link>
       </header>
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
+        <div className="mx-auto max-w-6xl px-5 py-10 md:px-10 md:py-12 lg:px-0">
           <article className="wp-content text-foreground">
             <h1>{legalPage?.title ?? FALLBACK_TITLE}</h1>
             {legalPage ? (

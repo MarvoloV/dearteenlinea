@@ -130,29 +130,107 @@
 }
 
 .wp-content {
-  line-height: 1.8;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: oklch(0.32 0 0);
+}
+
+.wp-content > h1 {
+  margin: 0 0 32px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: oklch(0.28 0 0);
+}
+
+.wp-content h2,
+.wp-content h3,
+.wp-content h4 {
+  font-weight: 700;
+  line-height: 1.35;
+  color: oklch(0.28 0 0);
+}
+
+.wp-content h2 {
+  margin: 28px 0 14px;
+  font-size: 18px;
+}
+
+.wp-content h3,
+.wp-content h4 {
+  margin: 24px 0 12px;
   font-size: 16px;
 }
 
-.wp-content h1,
-.wp-content h2,
-.wp-content h3 {
-  font-weight: 700;
-  margin: 32px 0 16px;
-}
-
 .wp-content p {
-  margin-bottom: 20px;
+  margin: 0 0 20px;
 }
 
-.wp-content strong {
+.wp-content strong,
+.wp-content b {
   font-weight: 700;
+  color: oklch(0.24 0 0);
 }
 
 .wp-content ul,
 .wp-content ol {
+  margin: 0 0 20px;
   padding-left: 24px;
-  margin-bottom: 20px;
+}
+
+.wp-content ul {
+  list-style-type: disc;
+}
+
+.wp-content ol {
+  list-style-type: decimal;
+}
+
+.wp-content ol[type="a"] {
+  list-style-type: lower-alpha;
+}
+
+.wp-content ol[type="A"] {
+  list-style-type: upper-alpha;
+}
+
+.wp-content ol[type="i"] {
+  list-style-type: lower-roman;
+}
+
+.wp-content ol[type="I"] {
+  list-style-type: upper-roman;
+}
+
+.wp-content li {
+  margin-bottom: 8px;
+}
+
+.wp-content a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wp-content br {
+  display: block;
+  margin-bottom: 12px;
+  content: "";
+}
+
+@media (min-width: 768px) {
+  .wp-content {
+    font-size: 18px;
+    line-height: 1.45;
+  }
+
+  .wp-content > h1 {
+    font-size: 46px;
+  }
+
+  .wp-content h2 {
+    font-size: 18px;
+  }
 }
 
 @keyframes whatsapp-float-bounce {
