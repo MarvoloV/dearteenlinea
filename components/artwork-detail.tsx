@@ -17,7 +17,7 @@ export type ArtworkDetailFlow = "dearteenlinea" | "qullqa-gallery";
 
 type ArtworkDetailProps = {
   artwork: Artwork;
-  artist: Artist;
+  artist: Artist | null;
   /** Lista del flujo para resolver nombres en “Otras obras en {medio}”. */
   artists: Artist[];
   relatedByMedium: Artwork[];
@@ -35,12 +35,16 @@ export function ArtworkDetail({
   basePath,
   flow,
 }: ArtworkDetailProps) {
-  const artistName = artistFullName(artist);
+  const artistName = artist ? artistFullName(artist) : "Artista";
   const manrope =
     flow === "qullqa-gallery" ? "[font-family:var(--font-manrope)]" : undefined;
   const categoryLabel =
-    artwork.category &&
-    dearteCategoryOptions.find((o) => o.id === artwork.category)?.label;
+    artwork.categories && artwork.categories.length > 0
+      ? artwork.categories.map((category) => category.label).join(" · ")
+      : artwork.category
+        ? dearteCategoryOptions.find((o) => o.id === artwork.category)?.label
+        : null;
+  const descriptionHtml = artwork.descriptionHtml?.trim();
 
   return (
     <div className="space-y-10 md:space-y-12">
@@ -76,43 +80,45 @@ export function ArtworkDetail({
             {artwork.title}
           </h1>
 
-          <Link
-            href={`${basePath}/artistas/${artist.slug}`}
-            className={cn(
-              "group flex max-w-md items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-2 pr-3 transition hover:border-border hover:bg-muted/35",
-              manrope,
-            )}
-          >
-            <div className="relative size-11 shrink-0 overflow-hidden rounded-full border border-border/80 bg-muted">
-              {artist.imageUrl ? (
-                <Image
-                  src={artist.imageUrl}
-                  alt={`Retrato de ${artistName}`}
-                  fill
-                  unoptimized
-                  className="object-cover"
-                  sizes="44px"
-                />
-              ) : (
-                <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted to-muted-foreground/10 text-xs font-medium text-muted-foreground">
-                  {artistInitials(artist.firstName, artist.lastName)}
-                </div>
+          {artist ? (
+            <Link
+              href={`${basePath}/artistas/${artist.slug}`}
+              className={cn(
+                "group flex max-w-md items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-2 pr-3 transition hover:border-border hover:bg-muted/35",
+                manrope,
               )}
-            </div>
-            <div className="min-w-0 text-left">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Artista
-              </p>
-              <p
-                className={cn(
-                  "truncate text-sm font-medium text-foreground group-hover:underline",
-                  manrope,
+            >
+              <div className="relative size-11 shrink-0 overflow-hidden rounded-full border border-border/80 bg-muted">
+                {artist.imageUrl ? (
+                  <Image
+                    src={artist.imageUrl}
+                    alt={`Retrato de ${artistName}`}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="44px"
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted to-muted-foreground/10 text-xs font-medium text-muted-foreground">
+                    {artistInitials(artist.firstName, artist.lastName)}
+                  </div>
                 )}
-              >
-                {artistName}
-              </p>
-            </div>
-          </Link>
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Artista
+                </p>
+                <p
+                  className={cn(
+                    "truncate text-sm font-medium text-foreground group-hover:underline",
+                    manrope,
+                  )}
+                >
+                  {artistName}
+                </p>
+              </div>
+            </Link>
+          ) : null}
 
           <dl
             className={cn(
@@ -126,14 +132,18 @@ export function ArtworkDetail({
                 <dd>{categoryLabel}</dd>
               </div>
             ) : null}
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
-              <dt className="font-medium text-foreground/90">Medio</dt>
-              <dd>{artwork.medium}</dd>
-            </div>
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
-              <dt className="font-medium text-foreground/90">Técnica</dt>
-              <dd>{artwork.technique}</dd>
-            </div>
+            {artwork.medium ? (
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="font-medium text-foreground/90">Medio</dt>
+                <dd>{artwork.medium}</dd>
+              </div>
+            ) : null}
+            {artwork.technique ? (
+              <div className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="font-medium text-foreground/90">Técnica</dt>
+                <dd>{artwork.technique}</dd>
+              </div>
+            ) : null}
             {artwork.year != null ? (
               <div className="flex flex-wrap gap-x-2 gap-y-1">
                 <dt className="font-medium text-foreground/90">Año</dt>
@@ -154,7 +164,15 @@ export function ArtworkDetail({
             ) : null}
           </dl>
 
-          {artwork.description ? (
+          {descriptionHtml ? (
+            <div
+              className={cn(
+                "max-w-prose text-sm leading-relaxed text-muted-foreground md:text-[15px] [&_p]:mb-3 [&_p:last-child]:mb-0",
+                manrope,
+              )}
+              dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+            />
+          ) : artwork.description ? (
             <p
               className={cn(
                 "max-w-prose text-sm leading-relaxed text-muted-foreground md:text-[15px]",
@@ -177,14 +195,14 @@ export function ArtworkDetail({
                 artistName={artistName}
                 triggerClassName={manrope}
               />
-            ) : (
+            ) : artist ? (
               <QullqaPurchaseContactModal
                 artist={artist}
                 artworkTitle={artwork.title}
                 artistDisplayName={artistName}
                 triggerClassName={manrope}
               />
-            )}
+            ) : null}
             <ArtworkShareModal
               artworkTitle={artwork.title}
               artistName={artistName}
@@ -227,16 +245,18 @@ export function ArtworkDetail({
               manrope,
             )}
           >
-            Otras obras de {artistName}
+            {artist ? `Otras obras de ${artistName}` : "Otras obras del artista"}
           </h2>
-          <p className={cn("mb-6 text-sm text-muted-foreground", manrope)}>
-            <Link
-              href={`${basePath}/artistas/${artist.slug}`}
-              className="font-medium text-foreground underline-offset-4 hover:underline"
-            >
-              Ver todas las obras de {artistName}
-            </Link>
-          </p>
+          {artist ? (
+            <p className={cn("mb-6 text-sm text-muted-foreground", manrope)}>
+              <Link
+                href={`${basePath}/artistas/${artist.slug}`}
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Ver todas las obras de {artistName}
+              </Link>
+            </p>
+          ) : null}
           <ul className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5 xl:gap-5">
             {relatedByArtist.map((a) => (
               <li key={a.slug} className="flex min-h-0 min-w-0 w-full">

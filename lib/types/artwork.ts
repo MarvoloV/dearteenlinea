@@ -11,9 +11,16 @@ export type Artwork = {
   /** URL pública externa cuando la obra viene de un CMS o API fuera de este sitio. */
   externalUrl?: string | null;
   description?: string | null;
+  descriptionHtml?: string | null;
   medium: string;
   /** Solo obras dearteenlinea; omitir en qullqa gallery. */
   category?: ArtworkDearteCategory;
+  categories?: Array<{
+    slug: string;
+    label: string;
+    href?: string | null;
+    count?: number | null;
+  }>;
   /** URL pública externa del medio cuando viene de un CMS o API fuera de este sitio. */
   mediumUrl?: string | null;
   dimensions?: string | null;

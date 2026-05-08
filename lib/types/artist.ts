@@ -27,6 +27,8 @@ export type Artist = {
   lastName: string;
   imageUrl?: string | null;
   description?: string | null;
+  /** HTML rico cuando la fuente lo provee; preferir sobre `description` en la UI. */
+  descriptionHtml?: string | null;
   nationality?: string | null;
   /** ISO date string YYYY-MM-DD */
   birthDate?: string | null;

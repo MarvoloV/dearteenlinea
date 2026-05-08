@@ -3,22 +3,24 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
 
 import {
   ALPHABET_LETTERS,
   artistFullName,
+  artistInitials,
   lastNameIndexLetter,
   matchesArtistQuery,
 } from "@/lib/artist-utils";
 import type { Artist } from "@/lib/types/artist";
 import { cn } from "@/lib/utils";
-
-function artistInitials(firstName: string, lastName: string): string {
-  const a = firstName.trim()[0] ?? "";
-  const b = lastName.trim()[0] ?? "";
-  return `${a}${b}`.toUpperCase() || "?";
-}
 
 function artistIndexLetter(artist: Artist): string {
   return lastNameIndexLetter(artist.lastName || artist.firstName);
@@ -33,6 +35,12 @@ type ArtistCatalogProps = {
   nameClassName?: string;
   /** Clases extra para el input de búsqueda (p. ej. Manrope en qullqa). */
   searchInputClassName?: string;
+  /** Valor actual del query param `search` cuando el catálogo depende de la URL. */
+  searchValue?: string;
+  /** Letra activa del query param `letra` cuando el catálogo depende de la URL. */
+  selectedLetter?: string | null;
+  /** Letras disponibles desde API; si se proveen, el catálogo usa modo URL/API. */
+  availableLetters?: string[];
 };
 
 export function ArtistCatalog({
@@ -41,18 +49,49 @@ export function ArtistCatalog({
   basePath,
   nameClassName,
   searchInputClassName,
+  searchValue = "",
+  selectedLetter = null,
+  availableLetters,
 }: ArtistCatalogProps) {
-  const [letter, setLetter] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const isUrlDriven = Array.isArray(availableLetters);
+  const [letter, setLetter] = useState<string | null>(selectedLetter);
+  const [search, setSearch] = useState(searchValue);
+
+  useEffect(() => {
+    if (!isUrlDriven) return;
+    const trimmed = search.trim();
+    const committed = searchValue.trim();
+    if (trimmed === committed) return;
+
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams();
+      if (letter) params.set("letra", letter.toLowerCase());
+      if (trimmed) params.set("search", trimmed);
+      const qs = params.toString();
+
+      startTransition(() => {
+        router.replace(
+          qs ? `${basePath}/artistas?${qs}` : `${basePath}/artistas`,
+          { scroll: false },
+        );
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [basePath, isUrlDriven, letter, router, search, searchValue]);
 
   const byLetter = useMemo(() => {
+    if (isUrlDriven) return artists;
     if (letter === null) return artists;
     return artists.filter((a) => artistIndexLetter(a) === letter);
-  }, [artists, letter]);
+  }, [artists, isUrlDriven, letter]);
 
   const filtered = useMemo(() => {
+    if (isUrlDriven) return byLetter;
     return byLetter.filter((a) => matchesArtistQuery(a, search));
-  }, [byLetter, search]);
+  }, [byLetter, isUrlDriven, search]);
 
   const countsByLetter = useMemo(() => {
     const m = new Map<string, number>();
@@ -63,6 +102,26 @@ export function ArtistCatalog({
     }
     return m;
   }, [artists]);
+
+  const visibleLetters = useMemo(() => {
+    if (isUrlDriven) return availableLetters ?? [];
+    return ALPHABET_LETTERS;
+  }, [availableLetters, isUrlDriven]);
+
+  function navigateWith(nextLetter: string | null) {
+    const params = new URLSearchParams();
+    const trimmed = search.trim();
+    if (nextLetter) params.set("letra", nextLetter.toLowerCase());
+    if (trimmed) params.set("search", trimmed);
+    const qs = params.toString();
+
+    setLetter(nextLetter);
+    startTransition(() => {
+      router.replace(qs ? `${basePath}/artistas?${qs}` : `${basePath}/artistas`, {
+        scroll: false,
+      });
+    });
+  }
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -95,7 +154,7 @@ export function ArtistCatalog({
         <div className="flex max-w-full gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible">
           <button
             type="button"
-            onClick={() => setLetter(null)}
+            onClick={() => (isUrlDriven ? navigateWith(null) : setLetter(null))}
             className={cn(
               "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
               letter === null
@@ -105,16 +164,18 @@ export function ArtistCatalog({
           >
             Todos
           </button>
-          {ALPHABET_LETTERS.map((L) => {
+          {visibleLetters.map((L) => {
             const count = countsByLetter.get(L) ?? 0;
-            const disabled = count === 0;
+            const disabled = isUrlDriven ? false : count === 0;
             const active = letter === L;
             return (
               <button
                 key={L}
                 type="button"
                 disabled={disabled}
-                onClick={() => !disabled && setLetter(L)}
+                onClick={() =>
+                  !disabled && (isUrlDriven ? navigateWith(L) : setLetter(L))
+                }
                 className={cn(
                   "size-9 shrink-0 rounded-full border text-xs font-medium transition",
                   disabled &&
@@ -136,13 +197,29 @@ export function ArtistCatalog({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {byLetter.length === 0
-            ? "No hay artistas con esta letra."
-            : "Ningún artista coincide con tu búsqueda."}
+        <p
+          className={cn(
+            "text-sm text-muted-foreground",
+            isPending && "opacity-70 transition-opacity",
+          )}
+        >
+          {isUrlDriven
+            ? search.trim()
+              ? "Ningún artista coincide con tu búsqueda."
+              : letter
+                ? "No hay artistas con esta letra."
+                : "No hay artistas disponibles."
+            : byLetter.length === 0
+              ? "No hay artistas con esta letra."
+              : "Ningún artista coincide con tu búsqueda."}
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-4 lg:grid-cols-5 lg:gap-4">
+        <ul
+          className={cn(
+            "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-4 lg:grid-cols-5 lg:gap-4",
+            isPending && "opacity-70 transition-opacity",
+          )}
+        >
           {filtered.map((artist) => (
             <li key={artist.slug} className="min-w-0">
               <Link

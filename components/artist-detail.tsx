@@ -47,6 +47,7 @@ export function ArtistDetail({
   const nation = formatNationality(artist.nationality);
   const metaParts = [nation, birth].filter(Boolean);
   const social = artist.social;
+  const descriptionHtml = artist.descriptionHtml?.trim();
 
   const socialEntries = social
     ? (["instagram", "facebook", "twitter", "linkedin"] as const)
@@ -114,7 +115,15 @@ export function ArtistDetail({
             </p>
           ) : null}
 
-          {artist.description ? (
+          {descriptionHtml ? (
+            <div
+              className={cn(
+                "max-w-prose text-sm leading-relaxed text-muted-foreground md:text-[15px] [&_p]:mb-3 [&_p:last-child]:mb-0",
+                manrope,
+              )}
+              dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+            />
+          ) : artist.description ? (
             <p
               className={cn(
                 "max-w-prose text-sm leading-relaxed text-muted-foreground md:text-[15px]",
@@ -127,20 +136,20 @@ export function ArtistDetail({
 
           {hasLinks ? (
             <div className="flex flex-wrap gap-2 pt-1">
-              {artist.web ? (
-                <a
-                  href={artist.web}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted",
-                    manrope,
-                  )}
-                >
-                  <Globe className="size-3.5 shrink-0" aria-hidden />
-                  Web
-                </a>
-              ) : null}
+              {/* {artist.web ? ( */}
+              {/*   <a */}
+              {/*     href={artist.web} */}
+              {/*     target="_blank" */}
+              {/*     rel="noopener noreferrer" */}
+              {/*     className={cn( */}
+              {/*       "inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted", */}
+              {/*       manrope, */}
+              {/*     )} */}
+              {/*   > */}
+              {/*     <Globe className="size-3.5 shrink-0" aria-hidden /> */}
+              {/*     Web */}
+              {/*   </a> */}
+              {/* ) : null} */}
               {socialEntries.map(({ key, href, label }) => (
                 <a
                   key={key}
