@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import { ArtworkCard } from "@/components/artwork-card";
@@ -39,6 +40,9 @@ type ArtworkCatalogProps = {
   initialMedio?: string;
   /** Desde `?categoria=` solo dearteenlinea (ya validado). */
   initialCategoria?: ArtworkDearteCategory;
+  clearPath?: string;
+  hideCategoryFilters?: boolean;
+  hideMediumFilters?: boolean;
 };
 
 function filterFields(flow: ArtworkCatalogFlow): {
@@ -112,6 +116,8 @@ type FiltersBodyProps = {
   mediums: readonly string[];
   techniques: readonly string[];
   labelClassName?: string;
+  hideCategoryFilters?: boolean;
+  hideMediumFilters?: boolean;
 };
 
 function FiltersBody({
@@ -129,6 +135,8 @@ function FiltersBody({
   mediums,
   techniques,
   labelClassName,
+  hideCategoryFilters,
+  hideMediumFilters,
 }: FiltersBodyProps) {
   const groupClass = "space-y-1.5";
   const legendClass = cn(
@@ -138,7 +146,7 @@ function FiltersBody({
 
   return (
     <div className="space-y-5">
-      {flow === "dearteenlinea" ? (
+      {flow === "dearteenlinea" && !hideCategoryFilters ? (
         <fieldset className={groupClass}>
           <legend className={legendClass}>Categoría</legend>
           <div className="flex flex-col gap-0.5">
@@ -159,24 +167,26 @@ function FiltersBody({
         </fieldset>
       ) : null}
 
-      <fieldset className={groupClass}>
-        <legend className={legendClass}>Medio</legend>
-        <div className="flex flex-col gap-0.5">
-          {mediums.map((m, i) => {
-            const id = `artwork-filter-med-${idSuffix}-${i}`;
-            return (
-              <FilterCheckbox
-                key={m}
-                id={id}
-                checked={selectedMediums.has(m)}
-                onCheckedChange={() => onToggleMedium(m)}
-                label={m}
-                className={labelClassName}
-              />
-            );
-          })}
-        </div>
-      </fieldset>
+      {!hideMediumFilters ? (
+        <fieldset className={groupClass}>
+          <legend className={legendClass}>Medio</legend>
+          <div className="flex flex-col gap-0.5">
+            {mediums.map((m, i) => {
+              const id = `artwork-filter-med-${idSuffix}-${i}`;
+              return (
+                <FilterCheckbox
+                  key={m}
+                  id={id}
+                  checked={selectedMediums.has(m)}
+                  onCheckedChange={() => onToggleMedium(m)}
+                  label={m}
+                  className={labelClassName}
+                />
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       <fieldset className={groupClass}>
         <legend className={legendClass}>Técnica</legend>
@@ -226,7 +236,11 @@ export function ArtworkCatalog({
   searchInputClassName,
   initialMedio,
   initialCategoria,
+  clearPath,
+  hideCategoryFilters = false,
+  hideMediumFilters = false,
 }: ArtworkCatalogProps) {
+  const router = useRouter();
   const { mediums, techniques } = filterFields(flow);
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<
@@ -289,7 +303,8 @@ export function ArtworkCatalog({
     setPriceRangeMin(priceSliderDomainMin);
     setPriceRangeMax(priceSliderDomainMax);
     setSearch("");
-  }, []);
+    if (clearPath) router.replace(clearPath, { scroll: false });
+  }, [clearPath, router]);
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -341,6 +356,8 @@ export function ArtworkCatalog({
     mediums,
     techniques,
     labelClassName: searchInputClassName,
+    hideCategoryFilters,
+    hideMediumFilters,
   };
   const filterPropsDesktop: FiltersBodyProps = {
     idSuffix: "d",
@@ -357,6 +374,8 @@ export function ArtworkCatalog({
     mediums,
     techniques,
     labelClassName: searchInputClassName,
+    hideCategoryFilters,
+    hideMediumFilters,
   };
 
   const filtersIntro = (

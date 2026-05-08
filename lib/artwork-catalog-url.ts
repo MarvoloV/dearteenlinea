@@ -1,10 +1,5 @@
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
-
-const CATEGORIA_IDS: ArtworkDearteCategory[] = [
-  "mercado_secundario",
-  "emergentes",
-  "consolidados",
-];
+import { dearteCategoryIdFromSlug } from "@/lib/dearte-filter-slugs";
 
 function firstParam(
   v: string | string[] | undefined,
@@ -28,7 +23,5 @@ export function parseCategoriaParam(
 ): ArtworkDearteCategory | undefined {
   const s = firstParam(raw)?.trim();
   if (!s) return undefined;
-  return CATEGORIA_IDS.includes(s as ArtworkDearteCategory)
-    ? (s as ArtworkDearteCategory)
-    : undefined;
+  return dearteCategoryIdFromSlug(s);
 }

@@ -6,6 +6,7 @@ import {
   type HomePastelVariant,
 } from "@/components/home-pastel-section";
 import { HomeSectionHeader } from "@/components/home-section-header";
+import { deartePathSlug } from "@/lib/dearte-filter-slugs";
 import type { HomeFlow } from "@/lib/medium-explore-images";
 import { mediumCardImage, mediumsForFlow } from "@/lib/medium-explore-images";
 import { cn } from "@/lib/utils";
@@ -67,10 +68,12 @@ function mediumHref(
   basePath: HomeExploreByMediumSectionProps["basePath"],
   queryParamName: NonNullable<HomeExploreByMediumSectionProps["queryParamName"]>,
 ): string {
-  const externalHref = medium.href?.trim();
-  if (externalHref) return externalHref;
-
-  const queryValue = medium.slug ?? medium.label;
+  const queryValue =
+    medium.slug ??
+    (basePath === "/dearteenlinea" ? deartePathSlug(medium.label) : medium.label);
+  if (basePath === "/dearteenlinea") {
+    return `${basePath}/obras/medios/${encodeURIComponent(queryValue)}`;
+  }
   return `${basePath}/obras?${queryParamName}=${encodeURIComponent(queryValue)}`;
 }
 

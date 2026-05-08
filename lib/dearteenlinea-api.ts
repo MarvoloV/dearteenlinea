@@ -1,4 +1,9 @@
 import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
+import {
+  dearteCategoryApiSlugById,
+  dearteCategoryApiSlugFromFilterValue,
+  dearteCategoryIdFromSlug,
+} from "@/lib/dearte-filter-slugs";
 import type { Artist } from "@/lib/types/artist";
 import type { Artwork, ArtworkDearteCategory } from "@/lib/types/artwork";
 import type {
@@ -59,12 +64,6 @@ const ARTISTAS_PATH = "/wp-json/dearte/v1/artistas";
 const ARTISTAS_LETRAS_PATH = "/wp-json/dearte/v1/artistas-letras";
 const DEFAULT_DEARTE_API_URL = "https://dearteenlinea.com";
 const HOME_CATEGORY_LIMIT = 5;
-
-const categoryEndpointById: Record<ArtworkDearteCategory, string> = {
-  mercado_secundario: "artistas-destacados",
-  consolidados: "artistas-consagrados",
-  emergentes: "artistas-emergente",
-};
 
 export type DearteenlineaLatestArtworksView = {
   artworks: Artwork[];
@@ -518,9 +517,25 @@ function normalizeObraListado(
   };
 }
 
-function normalizeStringArray(value: unknown): string[] {
+function normalizeStringList(value: unknown): string[] {
+  if (typeof value === "string") {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
   if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === "string");
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function cleanStringList(values: string[] | undefined): string[] {
+  return [
+    ...new Set((values ?? []).map((item) => item.trim()).filter(Boolean)),
+  ];
+}
+
+function cleanCategoryStringList(values: string[] | undefined): string[] {
+  return cleanStringList(values).map(dearteCategoryApiSlugFromFilterValue);
 }
 
 function normalizeObrasResponsePayload(
@@ -540,8 +555,12 @@ function normalizeObrasResponsePayload(
     data,
     filters: {
       search: stringOrNull(payload.filters.search),
-      categorias: normalizeStringArray(payload.filters.categorias),
-      medios: normalizeStringArray(payload.filters.medios),
+      categorias: normalizeStringList(
+        payload.filters.categorias ?? payload.filters.categoria,
+      ).map(dearteCategoryApiSlugFromFilterValue),
+      medios: normalizeStringList(
+        payload.filters.medios ?? payload.filters.medio,
+      ),
     },
     page: typeof payload.page === "number" ? payload.page : 1,
     pages: typeof payload.pages === "number" ? payload.pages : 1,
@@ -643,17 +662,7 @@ function artworkFromObra(obra: ObraDisponible, index: number): Artwork {
 function dearteCategoryEnumFromSlug(
   slug: string | null | undefined,
 ): ArtworkDearteCategory | undefined {
-  switch (slug) {
-    case "artistas-emergente":
-      return "emergentes";
-    case "artistas-consagrados":
-      return "consolidados";
-    case "artistas-destacados":
-    case "mercado-secundario":
-      return "mercado_secundario";
-    default:
-      return undefined;
-  }
+  return dearteCategoryIdFromSlug(slug);
 }
 
 function categoryTermsForArtwork(
@@ -750,7 +759,7 @@ function artworkFromCategoriaObra(
     category,
     categories: [
       {
-        slug: categoryEndpointById[category],
+        slug: dearteCategoryApiSlugById[category],
         label:
           category === "mercado_secundario"
             ? "Mercado secundario"
@@ -1087,11 +1096,11 @@ export async function getObras(
   query.set("page", String(safePage));
   query.set("per_page", String(safePerPage));
 
-  const categorias = [...new Set((params.categorias ?? []).map((item) => item.trim()).filter(Boolean))];
-  const medios = [...new Set((params.medios ?? []).map((item) => item.trim()).filter(Boolean))];
+  const categorias = cleanCategoryStringList(params.categorias);
+  const medios = cleanStringList(params.medios);
   const search = firstNonEmpty(params.search);
 
-  if (categorias.length > 0) query.set("categorias", categorias.join(","));
+  if (categorias.length > 0) query.set("categoria", categorias.join(","));
   if (medios.length > 0) query.set("medios", medios.join(","));
   if (search) query.set("search", search);
 
@@ -1127,15 +1136,15 @@ export async function getObrasCategoria(
 }
 
 export function getObrasMercadoSecundario(page = 1) {
-  return getObrasCategoria(categoryEndpointById.mercado_secundario, page);
+  return getObrasCategoria(dearteCategoryApiSlugById.mercado_secundario, page);
 }
 
 export function getObrasEmergentes(page = 1) {
-  return getObrasCategoria(categoryEndpointById.emergentes, page);
+  return getObrasCategoria(dearteCategoryApiSlugById.emergentes, page);
 }
 
 export function getObrasConsolidados(page = 1) {
-  return getObrasCategoria(categoryEndpointById.consolidados, page);
+  return getObrasCategoria(dearteCategoryApiSlugById.consolidados, page);
 }
 
 export async function getArtistas(
@@ -1260,7 +1269,7 @@ export async function fetchDearteenlineaCategoryArtworks(
   category: ArtworkDearteCategory,
   page = 1,
 ): Promise<DearteenlineaApiResult<DearteenlineaCategoryArtworksView>> {
-  const result = await getObrasCategoria(categoryEndpointById[category], page);
+  const result = await getObrasCategoria(dearteCategoryApiSlugById[category], page);
   if (!result.ok) return result;
 
   const selectedObras = result.data.data.slice(0, HOME_CATEGORY_LIMIT);
@@ -1357,6 +1366,8 @@ export async function fetchDearteenlineaObrasCatalog(
   const artworks = obrasResult.data.data.map((obra, index) =>
     artworkFromObraListado(obra, index),
   );
+  const requestedCategories = cleanCategoryStringList(params.categorias);
+  const requestedMediums = cleanStringList(params.medios);
 
   return {
     ok: true,
@@ -1373,8 +1384,14 @@ export async function fetchDearteenlineaObrasCatalog(
       },
       appliedFilters: {
         search: obrasResult.data.filters.search ?? "",
-        categorias: obrasResult.data.filters.categorias,
-        medios: obrasResult.data.filters.medios,
+        categorias:
+          obrasResult.data.filters.categorias.length > 0
+            ? obrasResult.data.filters.categorias
+            : requestedCategories,
+        medios:
+          obrasResult.data.filters.medios.length > 0
+            ? obrasResult.data.filters.medios
+            : requestedMediums,
       },
     },
   };

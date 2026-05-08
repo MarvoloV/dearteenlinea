@@ -25,6 +25,10 @@ type DearteArtworkCatalogProps = {
   pagination: DearteenlineaObrasPagination;
   appliedFilters: DearteenlineaAppliedArtworkFilters;
   basePath: "/dearteenlinea";
+  catalogPath?: string;
+  clearPath?: string;
+  hideCategoryFilters?: boolean;
+  hideMediumFilters?: boolean;
 };
 
 function artistForSlug(artists: Artist[], slug: string): Artist | undefined {
@@ -32,13 +36,13 @@ function artistForSlug(artists: Artist[], slug: string): Artist | undefined {
 }
 
 function buildObrasHref({
-  basePath,
+  catalogPath,
   search,
   categorias,
   medios,
   page,
 }: {
-  basePath: "/dearteenlinea";
+  catalogPath: string;
   search?: string;
   categorias?: string[];
   medios?: string[];
@@ -46,16 +50,22 @@ function buildObrasHref({
 }): string {
   const params = new URLSearchParams();
   const trimmedSearch = search?.trim();
-  const cleanCategorias = [...new Set((categorias ?? []).map((item) => item.trim()).filter(Boolean))];
-  const cleanMedios = [...new Set((medios ?? []).map((item) => item.trim()).filter(Boolean))];
+  const cleanCategorias = [
+    ...new Set((categorias ?? []).map((item) => item.trim()).filter(Boolean)),
+  ];
+  const cleanMedios = [
+    ...new Set((medios ?? []).map((item) => item.trim()).filter(Boolean)),
+  ];
 
   if (trimmedSearch) params.set("search", trimmedSearch);
-  if (cleanCategorias.length > 0) params.set("categorias", cleanCategorias.join(","));
+  if (cleanCategorias.length > 0) {
+    params.set("categoria", cleanCategorias.join(","));
+  }
   if (cleanMedios.length > 0) params.set("medios", cleanMedios.join(","));
   if (page && page > 1) params.set("page", String(page));
 
   const query = params.toString();
-  return query ? `${basePath}/obras?${query}` : `${basePath}/obras`;
+  return query ? `${catalogPath}?${query}` : catalogPath;
 }
 
 function visiblePages(current: number, total: number): number[] {
@@ -110,6 +120,8 @@ function FiltersBody({
   selectedMediums,
   onToggleCategory,
   onToggleMedium,
+  hideCategoryFilters,
+  hideMediumFilters,
 }: {
   idSuffix: "m" | "d";
   categories: DearteenlineaFilterOption[];
@@ -118,48 +130,54 @@ function FiltersBody({
   selectedMediums: Set<string>;
   onToggleCategory: (slug: string) => void;
   onToggleMedium: (slug: string) => void;
+  hideCategoryFilters?: boolean;
+  hideMediumFilters?: boolean;
 }) {
   return (
     <div className="space-y-5">
-      <fieldset className="space-y-1.5">
-        <legend className="mb-1 block text-xs font-medium text-muted-foreground">
-          Categoría
-        </legend>
-        <div className="flex flex-col gap-0.5">
-          {categories.map((category, index) => {
-            const id = `dearte-artwork-filter-cat-${idSuffix}-${index}`;
-            return (
-              <FilterCheckbox
-                key={category.slug}
-                id={id}
-                checked={selectedCategories.has(category.slug)}
-                onCheckedChange={() => onToggleCategory(category.slug)}
-                label={category.label}
-              />
-            );
-          })}
-        </div>
-      </fieldset>
+      {!hideCategoryFilters ? (
+        <fieldset className="space-y-1.5">
+          <legend className="mb-1 block text-xs font-medium text-muted-foreground">
+            Categoría
+          </legend>
+          <div className="flex flex-col gap-0.5">
+            {categories.map((category, index) => {
+              const id = `dearte-artwork-filter-cat-${idSuffix}-${index}`;
+              return (
+                <FilterCheckbox
+                  key={category.slug}
+                  id={id}
+                  checked={selectedCategories.has(category.slug)}
+                  onCheckedChange={() => onToggleCategory(category.slug)}
+                  label={category.label}
+                />
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
-      <fieldset className="space-y-1.5">
-        <legend className="mb-1 block text-xs font-medium text-muted-foreground">
-          Medio
-        </legend>
-        <div className="flex flex-col gap-0.5">
-          {mediums.map((medium, index) => {
-            const id = `dearte-artwork-filter-med-${idSuffix}-${index}`;
-            return (
-              <FilterCheckbox
-                key={medium.slug}
-                id={id}
-                checked={selectedMediums.has(medium.slug)}
-                onCheckedChange={() => onToggleMedium(medium.slug)}
-                label={medium.label}
-              />
-            );
-          })}
-        </div>
-      </fieldset>
+      {!hideMediumFilters ? (
+        <fieldset className="space-y-1.5">
+          <legend className="mb-1 block text-xs font-medium text-muted-foreground">
+            Medio
+          </legend>
+          <div className="flex flex-col gap-0.5">
+            {mediums.map((medium, index) => {
+              const id = `dearte-artwork-filter-med-${idSuffix}-${index}`;
+              return (
+                <FilterCheckbox
+                  key={medium.slug}
+                  id={id}
+                  checked={selectedMediums.has(medium.slug)}
+                  onCheckedChange={() => onToggleMedium(medium.slug)}
+                  label={medium.label}
+                />
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
     </div>
   );
 }
@@ -173,8 +191,14 @@ export function DearteArtworkCatalog({
   pagination,
   appliedFilters,
   basePath,
+  catalogPath: catalogPathProp,
+  clearPath,
+  hideCategoryFilters = false,
+  hideMediumFilters = false,
 }: DearteArtworkCatalogProps) {
   const router = useRouter();
+  const catalogPath = catalogPathProp ?? `${basePath}/obras`;
+  const emptyFiltersPath = clearPath ?? `${basePath}/obras`;
   const [isPending, startTransition] = useTransition();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchDraft, setSearchDraft] = useState(appliedFilters.search);
@@ -195,10 +219,10 @@ export function DearteArtworkCatalog({
         startTransition(() => {
           router.replace(
             buildObrasHref({
-              basePath,
+              catalogPath,
               search: trimmedDraft,
-              categorias: [...selectedCategories],
-              medios: [...selectedMediums],
+              categorias: hideCategoryFilters ? [] : [...selectedCategories],
+              medios: hideMediumFilters ? [] : [...selectedMediums],
               page: 1,
             }),
             { scroll: false },
@@ -210,7 +234,9 @@ export function DearteArtworkCatalog({
     }
   }, [
     appliedFilters.search,
-    basePath,
+    catalogPath,
+    hideCategoryFilters,
+    hideMediumFilters,
     router,
     searchDraft,
     selectedCategories,
@@ -222,6 +248,14 @@ export function DearteArtworkCatalog({
     selectedCategories.size > 0 ||
     selectedMediums.size > 0;
 
+  function categoriasForQuery(next?: Set<string>): string[] {
+    return hideCategoryFilters ? [] : [...(next ?? selectedCategories)];
+  }
+
+  function mediosForQuery(next?: Set<string>): string[] {
+    return hideMediumFilters ? [] : [...(next ?? selectedMediums)];
+  }
+
   function navigate(next: {
     search?: string;
     categorias?: Set<string>;
@@ -231,10 +265,10 @@ export function DearteArtworkCatalog({
     startTransition(() => {
       router.replace(
         buildObrasHref({
-          basePath,
+          catalogPath,
           search: next.search ?? searchDraft,
-          categorias: [...(next.categorias ?? selectedCategories)],
-          medios: [...(next.medios ?? selectedMediums)],
+          categorias: categoriasForQuery(next.categorias),
+          medios: mediosForQuery(next.medios),
           page: next.page,
         }),
         { scroll: false },
@@ -265,7 +299,7 @@ export function DearteArtworkCatalog({
     setSelectedCategories(emptyCategories);
     setSelectedMediums(emptyMediums);
     startTransition(() => {
-      router.replace(`${basePath}/obras`, { scroll: false });
+      router.replace(emptyFiltersPath, { scroll: false });
     });
   }
 
@@ -295,6 +329,8 @@ export function DearteArtworkCatalog({
     selectedMediums,
     onToggleCategory: toggleCategory,
     onToggleMedium: toggleMedium,
+    hideCategoryFilters,
+    hideMediumFilters,
   };
 
   return (
@@ -429,10 +465,10 @@ export function DearteArtworkCatalog({
             >
               <Link
                 href={buildObrasHref({
-                  basePath,
+                  catalogPath,
                   search: searchDraft,
-                  categorias: [...selectedCategories],
-                  medios: [...selectedMediums],
+                  categorias: categoriasForQuery(),
+                  medios: mediosForQuery(),
                   page: Math.max(1, pagination.page - 1),
                 })}
                 aria-disabled={pagination.page <= 1}
@@ -449,10 +485,10 @@ export function DearteArtworkCatalog({
                 <Link
                   key={page}
                   href={buildObrasHref({
-                    basePath,
+                    catalogPath,
                     search: searchDraft,
-                    categorias: [...selectedCategories],
-                    medios: [...selectedMediums],
+                    categorias: categoriasForQuery(),
+                    medios: mediosForQuery(),
                     page,
                   })}
                   aria-current={page === pagination.page ? "page" : undefined}
@@ -468,10 +504,10 @@ export function DearteArtworkCatalog({
               ))}
               <Link
                 href={buildObrasHref({
-                  basePath,
+                  catalogPath,
                   search: searchDraft,
-                  categorias: [...selectedCategories],
-                  medios: [...selectedMediums],
+                  categorias: categoriasForQuery(),
+                  medios: mediosForQuery(),
                   page: Math.min(pagination.totalPages, pagination.page + 1),
                 })}
                 aria-disabled={pagination.page >= pagination.totalPages}

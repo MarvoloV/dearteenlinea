@@ -4,9 +4,14 @@ import {
   HomePastelSection,
   type HomePastelVariant,
 } from "@/components/home-pastel-section";
+import { dearteCategoryPublicSlugById } from "@/lib/dearte-filter-slugs";
 import type { Artist } from "@/lib/types/artist";
 import type { Artwork, ArtworkDearteCategory } from "@/lib/types/artwork";
 import type { ReactNode } from "react";
+
+function categoryHref(category: ArtworkDearteCategory): string {
+  return `/dearteenlinea/obras/artistas/${dearteCategoryPublicSlugById[category]}`;
+}
 
 function categoryTitleArtistic(category: ArtworkDearteCategory): ReactNode {
   switch (category) {
@@ -68,7 +73,7 @@ export function HomeDearteCategorySection({
         titleSize="display"
         action={{
           label: "Ver todas",
-          href: `/dearteenlinea/obras?categoria=${category}`,
+          href: categoryHref(category),
         }}
       />
       <HomeArtworkRail
