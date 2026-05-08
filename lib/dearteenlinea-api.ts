@@ -204,6 +204,10 @@ function normalizeText(value: string | null | undefined): string | null {
   return firstNonEmpty(decoded?.replace(/\s+/g, " "));
 }
 
+function normalizeUrl(value: string | null | undefined): string | null {
+  return firstNonEmpty(value);
+}
+
 function fallbackArtworkImages(): string[] {
   return mockArtworksDearteenlinea.flatMap((artwork) => artwork.imageUrls);
 }
@@ -699,7 +703,7 @@ function artistFromObraListadoRef(raw: DearteObraListado["artista"]): Artist | n
     slug,
     displayName,
     ...splitDisplayName(displayName),
-    imageUrl: normalizeText(raw?.imagen),
+    imageUrl: normalizeUrl(raw?.imagen),
     web: firstNonEmpty(raw?.link),
   };
 }
@@ -853,7 +857,7 @@ function artistFromDearte(raw: ArtistaDearte): Artist | null {
     slugify(displayName);
   if (!slug) return null;
 
-  const imageUrl = normalizeText(
+  const imageUrl = normalizeUrl(
     typeof raw.imagen === "string" ? raw.imagen : null,
   );
 
@@ -879,7 +883,7 @@ function artistFromDetail(raw: ArtistaDetalleDearte): Artist | null {
     slug,
     displayName,
     ...splitDisplayName(displayName),
-    imageUrl: normalizeText(raw.imagen),
+    imageUrl: normalizeUrl(raw.imagen),
     descriptionHtml: firstNonEmpty(raw.descripcion),
     web: firstNonEmpty(raw.link),
   };

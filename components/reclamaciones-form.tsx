@@ -3,21 +3,24 @@
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { submitClaimBook } from "@/lib/claim-book";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "w-full rounded-lg border border-border/80 bg-background px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40";
+  "w-full rounded-lg border border-border/80 bg-background px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 const DOC_TYPES = [
   { value: "", label: "Seleccione" },
-  { value: "dni", label: "DNI" },
-  { value: "ce", label: "Carné de extranjería" },
-  { value: "pasaporte", label: "Pasaporte" },
-  { value: "ruc", label: "RUC" },
+  { value: "DNI", label: "DNI" },
+  { value: "CE", label: "Carné de extranjería" },
+  { value: "Pasaporte", label: "Pasaporte" },
+  { value: "RUC", label: "RUC" },
 ] as const;
 
+type ClaimBookStatus = "idle" | "submitting" | "success" | "error";
+
 export function ReclamacionesForm({ className }: { className?: string }) {
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<ClaimBookStatus>("idle");
   const [nombre, setNombre] = useState("");
   const [apellidos, setApellidos] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -29,13 +32,35 @@ export function ReclamacionesForm({ className }: { className?: string }) {
   const [observaciones, setObservaciones] = useState("");
   const [copiaEmail, setCopiaEmail] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const isSubmitting = status === "submitting";
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSent(true);
+
+    if (isSubmitting) return;
+
+    setStatus("submitting");
+
+    try {
+      await submitClaimBook({
+        nombres: nombre.trim(),
+        apellidos: apellidos.trim(),
+        telefono: telefono.trim(),
+        email: email.trim(),
+        tipo_documento: tipoDoc.trim(),
+        numero_documento: numDoc.trim(),
+        direccion: direccion.trim(),
+        pedido: pedido.trim(),
+        observacion: observaciones.trim(),
+        send_copy: copiaEmail,
+      });
+      reset("success");
+    } catch {
+      setStatus("error");
+    }
   };
 
-  const reset = () => {
-    setSent(false);
+  const reset = (nextStatus: ClaimBookStatus = "idle") => {
     setNombre("");
     setApellidos("");
     setTelefono("");
@@ -46,15 +71,24 @@ export function ReclamacionesForm({ className }: { className?: string }) {
     setPedido("");
     setObservaciones("");
     setCopiaEmail(false);
+    setStatus(nextStatus);
   };
 
-  if (sent) {
+  if (status === "success") {
     return (
-      <div className={cn("rounded-xl border border-border/70 bg-muted/20 p-6", className)}>
+      <div
+        className={cn("rounded-xl border border-border/70 bg-muted/20 p-6", className)}
+        aria-live="polite"
+      >
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Hemos registrado tu reclamación (demo: no se envía a ningún servidor).
+          Tu reclamo fue enviado correctamente.
         </p>
-        <Button type="button" variant="outline" className="mt-4 w-full" onClick={reset}>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 w-full"
+          onClick={() => reset()}
+        >
           Nueva reclamación
         </Button>
       </div>
@@ -62,10 +96,23 @@ export function ReclamacionesForm({ className }: { className?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+    <form
+      onSubmit={handleSubmit}
+      className={cn("space-y-6", className)}
+      aria-busy={isSubmitting}
+    >
       <p className="text-xs text-muted-foreground">
         Los campos marcados con * son obligatorios.
       </p>
+
+      {status === "error" ? (
+        <p
+          className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm leading-relaxed text-destructive"
+          role="alert"
+        >
+          No pudimos enviar tu reclamo. Inténtalo nuevamente.
+        </p>
+      ) : null}
 
       <fieldset className="space-y-4">
         <legend className="mb-1 text-sm font-medium text-foreground">
@@ -84,6 +131,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -99,6 +147,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={apellidos}
             onChange={(e) => setApellidos(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -111,6 +160,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -126,6 +176,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -139,6 +190,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={tipoDoc}
             onChange={(e) => setTipoDoc(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           >
             {DOC_TYPES.map((o) => (
               <option key={o.value || "empty"} value={o.value}>
@@ -159,6 +211,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={numDoc}
             onChange={(e) => setNumDoc(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -171,6 +224,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={direccion}
             onChange={(e) => setDireccion(e.target.value)}
             className={inputClass}
+            disabled={isSubmitting}
           />
         </label>
       </fieldset>
@@ -191,6 +245,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={pedido}
             onChange={(e) => setPedido(e.target.value)}
             className={cn(inputClass, "min-h-[5rem] resize-y")}
+            disabled={isSubmitting}
           />
         </label>
 
@@ -206,6 +261,7 @@ export function ReclamacionesForm({ className }: { className?: string }) {
             value={observaciones}
             onChange={(e) => setObservaciones(e.target.value)}
             className={cn(inputClass, "min-h-[5rem] resize-y")}
+            disabled={isSubmitting}
           />
         </label>
       </fieldset>
@@ -216,13 +272,14 @@ export function ReclamacionesForm({ className }: { className?: string }) {
           name="copiaEmail"
           checked={copiaEmail}
           onChange={(e) => setCopiaEmail(e.target.checked)}
+          disabled={isSubmitting}
           className="mt-1 size-4 shrink-0 rounded border-input"
         />
         <span>Enviarme una copia por correo electrónico.</span>
       </label>
 
-      <Button type="submit" className="w-full sm:w-auto">
-        Enviar reclamación
+      <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+        {isSubmitting ? "Enviando..." : "Enviar reclamación"}
       </Button>
     </form>
   );

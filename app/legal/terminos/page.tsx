@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import fs from "node:fs";
-import path from "node:path";
 import Link from "next/link";
 
-import { LegalDocumentBody } from "@/components/legal-document-body";
+import { fetchDearteenlineaLegalPage } from "@/lib/dearteenlinea-legal-page";
 
 export const metadata: Metadata = {
   title: "Términos y condiciones | dearteenlinea",
@@ -11,11 +9,14 @@ export const metadata: Metadata = {
     "Términos y condiciones de uso del sitio dearteenlinea y qullqa gallery.",
 };
 
-export default function TerminosPage() {
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "assets-cursor/dearteenlinea/tyc.md"),
-    "utf-8",
-  );
+const FALLBACK_TITLE = "Términos y condiciones";
+const TERMS_SLUG = "terminos-y-condiciones";
+
+export default async function TerminosPage() {
+  const legalPage = await fetchDearteenlineaLegalPage({
+    slug: TERMS_SLUG,
+    fallbackTitle: FALLBACK_TITLE,
+  });
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -29,8 +30,18 @@ export default function TerminosPage() {
       </header>
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
-          <article className="text-foreground">
-            <LegalDocumentBody raw={raw} />
+          <article className="wp-content text-foreground">
+            <h1>{legalPage?.title ?? FALLBACK_TITLE}</h1>
+            {legalPage ? (
+              <div
+                dangerouslySetInnerHTML={{ __html: legalPage.contentHtml }}
+              />
+            ) : (
+              <p>
+                No se pudieron cargar los términos y condiciones en este
+                momento.
+              </p>
+            )}
           </article>
         </div>
       </main>
