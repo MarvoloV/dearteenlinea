@@ -64,6 +64,15 @@ const ARTISTAS_PATH = "/wp-json/dearte/v1/artistas";
 const ARTISTAS_LETRAS_PATH = "/wp-json/dearte/v1/artistas-letras";
 const DEFAULT_DEARTE_API_URL = "https://dearteenlinea.com";
 const HOME_CATEGORY_LIMIT = 5;
+const HOME_REVALIDATE_SECONDS = 300;
+const LIST_REVALIDATE_SECONDS = 300;
+const TAXONOMY_REVALIDATE_SECONDS = 600;
+
+type DearteFetchOptions = {
+  cache?: RequestCache;
+  revalidate?: number;
+  tags?: string[];
+};
 
 export type DearteenlineaLatestArtworksView = {
   artworks: Artwork[];
@@ -100,6 +109,18 @@ export type DearteenlineaObrasCatalogView = {
   artists: Artist[];
   categories: DearteenlineaFilterOption[];
   mediums: DearteenlineaFilterOption[];
+  pagination: DearteenlineaObrasPagination;
+  appliedFilters: DearteenlineaAppliedArtworkFilters;
+};
+
+export type DearteenlineaObrasFiltersView = {
+  categories: DearteenlineaFilterOption[];
+  mediums: DearteenlineaFilterOption[];
+};
+
+export type DearteenlineaObrasListView = {
+  artworks: Artwork[];
+  artists: Artist[];
   pagination: DearteenlineaObrasPagination;
   appliedFilters: DearteenlineaAppliedArtworkFilters;
 };
@@ -1017,6 +1038,7 @@ function errorResult<T>(
 
 async function fetchDearteJson(
   path: string,
+  options: DearteFetchOptions = {},
 ): Promise<DearteenlineaApiResult<unknown>> {
   let url: URL;
 
@@ -1027,12 +1049,24 @@ async function fetchDearteJson(
   }
 
   try {
-    const response = await fetch(url, {
-      cache: "no-store",
+    const fetchOptions: RequestInit & {
+      next?: { revalidate?: number; tags?: string[] };
+    } = {
       headers: {
         accept: "application/json",
       },
-    });
+    };
+
+    if (typeof options.revalidate === "number") {
+      fetchOptions.next = {
+        revalidate: options.revalidate,
+        ...(options.tags ? { tags: options.tags } : {}),
+      };
+    } else {
+      fetchOptions.cache = options.cache ?? "no-store";
+    }
+
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
       return errorResult(
@@ -1050,7 +1084,9 @@ async function fetchDearteJson(
 export async function getObrasDisponibles(): Promise<
   DearteenlineaApiResult<ObraDisponible[]>
 > {
-  const result = await fetchDearteJson(OBRAS_DISPONIBLES_PATH);
+  const result = await fetchDearteJson(OBRAS_DISPONIBLES_PATH, {
+    revalidate: HOME_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const obras = normalizeObrasPayload(result.data);
@@ -1064,7 +1100,9 @@ export async function getObrasDisponibles(): Promise<
 export async function getMediosDearte(): Promise<
   DearteenlineaApiResult<MedioDearte[]>
 > {
-  const result = await fetchDearteJson(MEDIOS_PATH);
+  const result = await fetchDearteJson(MEDIOS_PATH, {
+    revalidate: TAXONOMY_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const medios = normalizeMediosPayload(result.data);
@@ -1078,7 +1116,9 @@ export async function getMediosDearte(): Promise<
 export async function getFiltrosObras(): Promise<
   DearteenlineaApiResult<FiltrosObrasResponse>
 > {
-  const result = await fetchDearteJson(FILTROS_OBRAS_PATH);
+  const result = await fetchDearteJson(FILTROS_OBRAS_PATH, {
+    revalidate: TAXONOMY_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const filters = normalizeFiltrosObrasPayload(result.data);
@@ -1108,7 +1148,9 @@ export async function getObras(
   if (medios.length > 0) query.set("medios", medios.join(","));
   if (search) query.set("search", search);
 
-  const result = await fetchDearteJson(`${OBRAS_PATH}?${query.toString()}`);
+  const result = await fetchDearteJson(`${OBRAS_PATH}?${query.toString()}`, {
+    revalidate: LIST_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const obras = normalizeObrasResponsePayload(result.data);
@@ -1126,6 +1168,7 @@ export async function getObrasCategoria(
   const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
   const result = await fetchDearteJson(
     `${CATEGORIA_PATH}/${encodeURIComponent(slug)}?page=${safePage}`,
+    { revalidate: HOME_REVALIDATE_SECONDS },
   );
   if (!result.ok) return result;
 
@@ -1162,7 +1205,9 @@ export async function getArtistas(
   if (search) query.set("search", search);
 
   const path = query.size > 0 ? `${ARTISTAS_PATH}?${query}` : ARTISTAS_PATH;
-  const result = await fetchDearteJson(path);
+  const result = await fetchDearteJson(path, {
+    revalidate: LIST_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const artists = normalizeArtistasPayload(result.data);
@@ -1178,7 +1223,9 @@ export async function getArtistas(
 export async function getLetrasArtistas(): Promise<
   DearteenlineaApiResult<LetrasArtistasResponse>
 > {
-  const result = await fetchDearteJson(ARTISTAS_LETRAS_PATH);
+  const result = await fetchDearteJson(ARTISTAS_LETRAS_PATH, {
+    revalidate: TAXONOMY_REVALIDATE_SECONDS,
+  });
   if (!result.ok) return result;
 
   const letters = normalizeLetrasArtistasPayload(result.data);
@@ -1344,59 +1391,88 @@ export async function fetchDearteenlineaArtistDetail(
   };
 }
 
+function filtersViewFromDearte(
+  filters: FiltrosObrasResponse,
+): DearteenlineaObrasFiltersView {
+  return {
+    categories: Object.values(filters.categorias).map((category) => ({
+      label: normalizeText(category.nombre) ?? category.nombre,
+      slug: category.slug,
+      count: category.count,
+      href: firstNonEmpty(category.link),
+    })),
+    mediums: filters.medios.map((medium) => ({
+      label: normalizeText(medium.nombre) ?? medium.nombre,
+      slug: medium.slug,
+      count: medium.count,
+      href: firstNonEmpty(medium.link),
+    })),
+  };
+}
+
+function obrasListViewFromDearte(
+  obras: DearteObrasResponse,
+  params: DearteenlineaObrasParams,
+): DearteenlineaObrasListView {
+  const requestedCategories = cleanCategoryStringList(params.categorias);
+  const requestedMediums = cleanStringList(params.medios);
+
+  return {
+    artworks: obras.data.map((obra, index) => artworkFromObraListado(obra, index)),
+    artists: artistsFromObraListadoItems(obras.data),
+    pagination: {
+      page: obras.page,
+      totalPages: obras.pages,
+      totalItems: obras.total,
+      pageSize: obras.per_page,
+    },
+    appliedFilters: {
+      search: obras.filters.search ?? "",
+      categorias:
+        obras.filters.categorias.length > 0
+          ? obras.filters.categorias
+          : requestedCategories,
+      medios:
+        obras.filters.medios.length > 0 ? obras.filters.medios : requestedMediums,
+    },
+  };
+}
+
+export async function fetchDearteenlineaObrasFilters(): Promise<
+  DearteenlineaApiResult<DearteenlineaObrasFiltersView>
+> {
+  const result = await getFiltrosObras();
+  if (!result.ok) return result;
+
+  return { ok: true, data: filtersViewFromDearte(result.data) };
+}
+
+export async function fetchDearteenlineaObrasList(
+  params: DearteenlineaObrasParams = {},
+): Promise<DearteenlineaApiResult<DearteenlineaObrasListView>> {
+  const result = await getObras(params);
+  if (!result.ok) return result;
+
+  return { ok: true, data: obrasListViewFromDearte(result.data, params) };
+}
+
 export async function fetchDearteenlineaObrasCatalog(
   params: DearteenlineaObrasParams = {},
 ): Promise<DearteenlineaApiResult<DearteenlineaObrasCatalogView>> {
   const [filtersResult, obrasResult] = await Promise.all([
-    getFiltrosObras(),
-    getObras(params),
+    fetchDearteenlineaObrasFilters(),
+    fetchDearteenlineaObrasList(params),
   ]);
 
   if (!filtersResult.ok) return filtersResult;
   if (!obrasResult.ok) return obrasResult;
 
-  const categories = Object.values(filtersResult.data.categorias).map((category) => ({
-    label: normalizeText(category.nombre) ?? category.nombre,
-    slug: category.slug,
-    count: category.count,
-    href: firstNonEmpty(category.link),
-  }));
-  const mediums = filtersResult.data.medios.map((medium) => ({
-    label: normalizeText(medium.nombre) ?? medium.nombre,
-    slug: medium.slug,
-    count: medium.count,
-    href: firstNonEmpty(medium.link),
-  }));
-  const artworks = obrasResult.data.data.map((obra, index) =>
-    artworkFromObraListado(obra, index),
-  );
-  const requestedCategories = cleanCategoryStringList(params.categorias);
-  const requestedMediums = cleanStringList(params.medios);
-
   return {
     ok: true,
     data: {
-      artworks,
-      artists: artistsFromObraListadoItems(obrasResult.data.data),
-      categories,
-      mediums,
-      pagination: {
-        page: obrasResult.data.page,
-        totalPages: obrasResult.data.pages,
-        totalItems: obrasResult.data.total,
-        pageSize: obrasResult.data.per_page,
-      },
-      appliedFilters: {
-        search: obrasResult.data.filters.search ?? "",
-        categorias:
-          obrasResult.data.filters.categorias.length > 0
-            ? obrasResult.data.filters.categorias
-            : requestedCategories,
-        medios:
-          obrasResult.data.filters.medios.length > 0
-            ? obrasResult.data.filters.medios
-            : requestedMediums,
-      },
+      ...obrasResult.data,
+      categories: filtersResult.data.categories,
+      mediums: filtersResult.data.mediums,
     },
   };
 }

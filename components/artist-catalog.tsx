@@ -232,7 +232,6 @@ export function ArtistCatalog({
                       src={artist.imageUrl}
                       alt={`Retrato de ${artistFullName(artist)}`}
                       fill
-                      unoptimized
                       className="object-cover transition duration-500 group-hover:scale-[1.02]"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />

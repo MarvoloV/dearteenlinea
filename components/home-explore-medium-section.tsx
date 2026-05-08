@@ -113,7 +113,6 @@ function MediumCard({
         src={src}
         alt=""
         fill
-        unoptimized
         className="object-cover transition duration-300 group-hover:scale-[1.02]"
         sizes={
           variant === "fill"

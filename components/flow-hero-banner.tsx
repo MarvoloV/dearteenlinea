@@ -32,7 +32,6 @@ export function FlowHeroBanner({
         src={imageSrc}
         alt={imageAlt}
         fill
-        unoptimized
         priority={imagePriority}
         className="object-cover"
         sizes="100vw"

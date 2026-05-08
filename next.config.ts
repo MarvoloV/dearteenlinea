@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         hostname: "dearteenlinea.com",
         pathname: "/wp-content/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "www.dearteenlinea.com",
+        pathname: "/wp-content/uploads/**",
+      },
     ],
   },
 };

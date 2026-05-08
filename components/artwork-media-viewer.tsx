@@ -167,7 +167,6 @@ export function ArtworkMediaViewer({
               src={items[0]!.url}
               alt={imgAlt(artwork)}
               fill
-              unoptimized
               className="object-cover"
               sizes={imageSizes}
             />
@@ -198,7 +197,6 @@ export function ArtworkMediaViewer({
                     src={item.url}
                     alt={imgAlt(artwork)}
                     fill
-                    unoptimized
                     className="object-cover"
                     sizes={imageSizes}
                   />
