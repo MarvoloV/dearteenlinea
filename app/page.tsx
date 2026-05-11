@@ -1,5 +1,13 @@
 import { PathSelector } from "@/components/path-selector";
+import { getHomeConfig } from "@/lib/home-config";
 
-export default function Home() {
-  return <PathSelector />;
+export default async function Home() {
+  const homeConfig = await getHomeConfig();
+
+  return (
+    <PathSelector
+      dearte={homeConfig.paths.dearte}
+      qullqa={homeConfig.paths.qullqa}
+    />
+  );
 }

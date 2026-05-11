@@ -15,7 +15,7 @@ import {
   fetchDearteenlineaHomeMediums,
   fetchDearteenlineaLatestArtworks,
 } from "@/lib/dearteenlinea-api";
-import { flowHeroImages } from "@/lib/flow-hero-assets";
+import { getHomeConfig } from "@/lib/home-config";
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
 const latestTitle = (
@@ -119,15 +119,18 @@ async function HomeCategorySection({
   );
 }
 
-export default function DearteenlineaPage() {
+export default async function DearteenlineaPage() {
+  const homeConfig = await getHomeConfig();
+  const hero = homeConfig.heroes.dearte;
+
   return (
     <>
       <FlowHeader variant="dearteenlinea" />
       <main className="flex flex-1 flex-col">
         <FlowHeroBanner
           imagePriority
-          imageSrc={flowHeroImages.dearteenlinea}
-          imageAlt="Vista interior de galería con gran obra pictórica"
+          imageSrc={hero.imageUrl}
+          imageAlt={hero.imageAlt}
           title={
             <>
               <span className="sr-only">Galería dearteenlinea</span>
@@ -138,7 +141,7 @@ export default function DearteenlineaPage() {
               />
             </>
           }
-          description="Galería en línea con obras curadas: artistas consolidados, emergentes y mercado secundario. La curaduría de dearteenlinea prioriza la calidad para visitantes y coleccionistas."
+          description={hero.description}
         />
         <div className="flex flex-col gap-10 pb-12 pt-8 md:gap-12 md:pb-16 md:pt-10">
           <Suspense

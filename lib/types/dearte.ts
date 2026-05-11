@@ -23,6 +23,32 @@ export type DearteFiltrosObrasResponse = {
   medios: DearteMediumRef[];
 };
 
+export type HomeConfigImage = {
+  id: number;
+  url: string;
+  alt: string;
+  title: string;
+  width: number;
+  height: number;
+  sizes?: Record<string, string | number>;
+};
+
+export type HomeConfigItem = {
+  key: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: HomeConfigImage | null;
+  button_text: string;
+  button_link: string;
+};
+
+export type HomeConfigResponse = {
+  success: boolean;
+  count: number;
+  data: HomeConfigItem[];
+};
+
 export type DeartePrice = {
   html: string | null;
   regular: string | null;

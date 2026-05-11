@@ -21,7 +21,7 @@ alwaysApply: true
 ## Configuración
 
 - Imágenes remotas: [next.config.ts](next.config.ts) (`images.remotePatterns`); añadir hosts si se usan nuevos proveedores.
-- API Dearte en Línea: [`lib/dearteenlinea-api.ts`](lib/dearteenlinea-api.ts) consume `NEXT_PUBLIC_DEARTE_API_URL` (default `https://dearteenlinea.com`) para home dearteenlinea (“Últimas obras”, “Explorar por medio” y bloques de categorías), catálogo `/dearteenlinea/artistas`, ficha `/dearteenlinea/artistas/[slug]`, catálogo `/dearteenlinea/obras` y ficha `/dearteenlinea/obras/[slug]`, con mocks como fallback cuando corresponda. Tipos raw centralizados en [`lib/types/dearte.ts`](lib/types/dearte.ts).
+- API Dearte en Línea: [`lib/dearteenlinea-api.ts`](lib/dearteenlinea-api.ts) consume `NEXT_PUBLIC_DEARTE_API_URL` (default `https://dearteenlinea.com`) para home dearteenlinea (“Últimas obras”, “Explorar por medio” y bloques de categorías), catálogo `/dearteenlinea/artistas`, ficha `/dearteenlinea/artistas/[slug]`, catálogo `/dearteenlinea/obras` y ficha `/dearteenlinea/obras/[slug]`, con mocks como fallback cuando corresponda. [`lib/home-config.ts`](lib/home-config.ts) consume `/home-config` con ISR para los bloques principales de `/` y los heroes de `/dearteenlinea` y `/qullqa-gallery`. Tipos raw centralizados en [`lib/types/dearte.ts`](lib/types/dearte.ts).
 - Lint: `npm run lint`. Build: `npm run build`.
 
 ## Alcance actual

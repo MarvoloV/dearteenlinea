@@ -2,17 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { DearteenlineaLogo } from "@/components/dearteenlinea-logo";
+import type { HomePathConfig } from "@/lib/home-config";
 
-/**
- * Pintura abstracta en sala de museo (Unsplash). Enfoque en obra de arte, no en mobiliario / interiorismo.
- * ID verificado HTTP 200.
- */
-const dearteImage =
-  "https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&w=2000&q=85";
-const qullqaImage =
-  "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=2000&q=85";
+type PathSelectorProps = {
+  dearte: HomePathConfig;
+  qullqa: HomePathConfig;
+};
 
-export function PathSelector() {
+export function PathSelector({ dearte, qullqa }: PathSelectorProps) {
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       <Link
@@ -20,10 +17,9 @@ export function PathSelector() {
         className="group relative flex min-h-[50dvh] flex-1 flex-col justify-end overflow-hidden outline-offset-0 transition focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring md:min-h-0"
       >
         <Image
-          src={dearteImage}
-          alt=""
+          src={dearte.imageUrl}
+          alt={dearte.imageAlt}
           fill
-          unoptimized
           className="object-cover transition duration-700 ease-out group-hover:scale-[1.03] group-active:scale-[1.01]"
           sizes="(max-width: 768px) 100vw, 50vw"
           priority
@@ -34,15 +30,14 @@ export function PathSelector() {
         />
         <div className="relative z-10 max-w-lg px-6 pb-10 pt-16 text-white md:px-10 md:pb-14">
           <p className="mb-2 text-[10px] uppercase tracking-[0.35em] text-white/80">
-            Galería
+            {dearte.subtitle}
           </p>
           <h1 className="mb-3">
-            <span className="sr-only">dearteenlinea</span>
+            <span className="sr-only">{dearte.title}</span>
             <DearteenlineaLogo inverted className="h-10 w-auto md:h-12" />
           </h1>
           <p className="text-sm leading-relaxed text-white/90 md:text-base">
-            Obras curadas: artistas consolidados, emergentes y piezas de mercado
-            secundario, reunidas con criterio para quien busca calidad.
+            {dearte.description}
           </p>
         </div>
       </Link>
@@ -57,10 +52,9 @@ export function PathSelector() {
         className="group relative flex min-h-[50dvh] flex-1 flex-col justify-end overflow-hidden outline-offset-0 transition focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring md:min-h-0"
       >
         <Image
-          src={qullqaImage}
-          alt=""
+          src={qullqa.imageUrl}
+          alt={qullqa.imageAlt}
           fill
-          unoptimized
           className="object-cover transition duration-700 ease-out group-hover:scale-[1.03] group-active:scale-[1.01]"
           sizes="(max-width: 768px) 100vw, 50vw"
         />
@@ -70,15 +64,13 @@ export function PathSelector() {
         />
         <div className="relative z-10 max-w-lg px-6 pb-10 pt-16 text-white md:px-10 md:pb-14">
           <p className="mb-2 text-[10px] uppercase tracking-[0.35em] text-white/80">
-            Espacio público
+            {qullqa.subtitle}
           </p>
           <h2 className="mb-3 text-2xl font-medium leading-snug tracking-tight md:text-3xl [font-family:var(--font-manrope)]">
-            qullqa gallery
+            {qullqa.title}
           </h2>
           <p className="text-sm leading-relaxed text-white/90 md:text-base [font-family:var(--font-manrope)]">
-            Obras publicadas desde la plataforma qullqa: un escaparate abierto
-            para artistas que gestionan y comparten su trabajo con
-            coleccionistas.
+            {qullqa.description}
           </p>
         </div>
       </Link>

@@ -2,35 +2,41 @@
 
 import { Search, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { FlowHeaderVariant } from "@/components/flow-header-nav";
-import { artistBySlugFromList, artistFullName } from "@/lib/artist-utils";
-import { searchArtistsInFlow, searchArtworksInFlow } from "@/lib/flow-search";
-import type { Artist } from "@/lib/types/artist";
-import type { Artwork } from "@/lib/types/artwork";
 import { cn } from "@/lib/utils";
 import { useGlobalSearch } from "@/hooks/use-global-search";
 import type {
   ArtistSearchResult,
   ArtworkSearchResult,
+  SearchContext,
 } from "@/types/search";
 
-const MIN_DEARTE_SEARCH_LENGTH = 2;
+const MIN_SEARCH_LENGTH = 2;
 
-function basePathFor(variant: FlowHeaderVariant): "/dearteenlinea" | "/qullqa-gallery" {
-  return variant === "dearteenlinea" ? "/dearteenlinea" : "/qullqa-gallery";
+function searchContextForPathname(
+  pathname: string | null,
+  variant: FlowHeaderVariant,
+): SearchContext {
+  if (pathname?.startsWith("/dearteenlinea")) return "dearteenlinea";
+  if (pathname?.startsWith("/qullqa-gallery")) return "qullqa-gallery";
+  return variant;
+}
+
+function basePathFor(context: SearchContext): "/dearteenlinea" | "/qullqa-gallery" {
+  return context === "dearteenlinea" ? "/dearteenlinea" : "/qullqa-gallery";
 }
 
 export type FlowHeaderSearchProps = {
   variant: FlowHeaderVariant;
-  artists: Artist[];
-  artworks: Artwork[];
 };
 
-export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearchProps) {
-  const basePath = basePathFor(variant);
-  const isDearte = variant === "dearteenlinea";
+export function FlowHeaderSearch({ variant }: FlowHeaderSearchProps) {
+  const pathname = usePathname();
+  const context = searchContextForPathname(pathname, variant);
+  const basePath = basePathFor(context);
   const qullqa = variant === "qullqa-gallery";
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -43,49 +49,29 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
 
   const trimmed = value.trim();
   const globalSearch = useGlobalSearch({
-    context: variant,
-    query: isDearte ? value : "",
+    context,
+    query: value,
     debounceMs: 350,
-    minLength: MIN_DEARTE_SEARCH_LENGTH,
+    minLength: MIN_SEARCH_LENGTH,
   });
 
-  const matchedArtists = useMemo(
-    () => (isDearte ? [] : searchArtistsInFlow(artists, trimmed)),
-    [artists, isDearte, trimmed],
-  );
-  const matchedArtworks = useMemo(
-    () => (isDearte ? [] : searchArtworksInFlow(artworks, trimmed)),
-    [artworks, isDearte, trimmed],
-  );
-
   const showPanel = panelOpen && trimmed.length > 0;
-  const hasShortDearteQuery =
-    isDearte &&
-    trimmed.length > 0 &&
-    trimmed.length < MIN_DEARTE_SEARCH_LENGTH;
-  const hasActiveDearteSearch =
-    isDearte && globalSearch.searchedQuery === trimmed;
-  const dearteArtists = hasActiveDearteSearch
-    ? globalSearch.results.artists
-    : [];
-  const dearteArtworks = hasActiveDearteSearch
-    ? globalSearch.results.artworks
-    : [];
-  const isDearteLoading =
-    isDearte &&
-    trimmed.length >= MIN_DEARTE_SEARCH_LENGTH &&
-    (globalSearch.isLoading || !hasActiveDearteSearch);
-  const dearteError = hasActiveDearteSearch ? globalSearch.error : null;
-  const dearteNoResults =
-    isDearte &&
-    !hasShortDearteQuery &&
-    !isDearteLoading &&
-    !dearteError &&
+  const hasShortQuery =
+    trimmed.length > 0 && trimmed.length < MIN_SEARCH_LENGTH;
+  const hasActiveSearch = globalSearch.searchedQuery === trimmed;
+  const resultArtists = hasActiveSearch ? globalSearch.results.artists : [];
+  const resultArtworks = hasActiveSearch ? globalSearch.results.artworks : [];
+  const isSearchLoading =
+    trimmed.length >= MIN_SEARCH_LENGTH &&
+    (globalSearch.isLoading || !hasActiveSearch);
+  const searchError = hasActiveSearch ? globalSearch.error : null;
+  const noResults =
+    !hasShortQuery &&
+    !isSearchLoading &&
+    !searchError &&
     globalSearch.hasSearched &&
-    dearteArtists.length === 0 &&
-    dearteArtworks.length === 0;
-  const localNoResults =
-    !isDearte && matchedArtists.length === 0 && matchedArtworks.length === 0;
+    resultArtists.length === 0 &&
+    resultArtworks.length === 0;
 
   const clearBlurCloseTimer = useCallback(() => {
     if (blurCloseTimerRef.current != null) {
@@ -179,11 +165,11 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
     );
   }
 
-  function renderDearteArtist(artist: ArtistSearchResult) {
+  function renderArtist(artist: ArtistSearchResult) {
     return (
       <li key={`artist-${artist.id}-${artist.slug}`}>
         <Link
-          href={`/dearteenlinea/artistas/${artist.slug}`}
+          href={`${basePath}/artistas/${artist.slug}`}
           className={cn(linkRow, "text-foreground")}
           onClick={closePanel}
         >
@@ -193,13 +179,13 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
     );
   }
 
-  function renderDearteArtwork(artwork: ArtworkSearchResult) {
+  function renderArtwork(artwork: ArtworkSearchResult) {
     const meta = [artwork.artistName, artwork.mediumName].filter(Boolean);
 
     return (
       <li key={`artwork-${artwork.id}-${artwork.slug}`}>
         <Link
-          href={`/dearteenlinea/obras/${artwork.slug}`}
+          href={`${basePath}/obras/${artwork.slug}`}
           className={cn(linkRow)}
           onClick={closePanel}
         >
@@ -214,8 +200,8 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
     );
   }
 
-  function renderDeartePanelContent() {
-    if (hasShortDearteQuery) {
+  function renderPanelContent() {
+    if (hasShortQuery) {
       return (
         <p className="px-3 py-4 text-sm text-muted-foreground" role="status">
           Escribe al menos 2 caracteres.
@@ -223,7 +209,7 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
       );
     }
 
-    if (isDearteLoading) {
+    if (isSearchLoading) {
       return (
         <p className="px-3 py-4 text-sm text-muted-foreground" role="status">
           Buscando...
@@ -231,15 +217,15 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
       );
     }
 
-    if (dearteError) {
+    if (searchError) {
       return (
         <p className="px-3 py-4 text-sm text-muted-foreground" role="alert">
-          {dearteError}
+          {searchError}
         </p>
       );
     }
 
-    if (dearteNoResults) {
+    if (noResults) {
       return (
         <p className="px-3 py-4 text-sm text-muted-foreground" role="status">
           No hay resultados para &ldquo;{trimmed}&rdquo;.
@@ -249,86 +235,22 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
 
     return (
       <div className="py-1">
-        {dearteArtists.length > 0 ? (
+        {resultArtists.length > 0 ? (
           <div>
             {sectionTitle("Artistas")}
             <ul className="m-0 list-none p-0">
-              {dearteArtists.map(renderDearteArtist)}
+              {resultArtists.map(renderArtist)}
             </ul>
           </div>
         ) : null}
-        {dearteArtworks.length > 0 ? (
+        {resultArtworks.length > 0 ? (
           <div>
             {sectionTitle("Obras")}
             <ul className="m-0 list-none p-0">
-              {dearteArtworks.map(renderDearteArtwork)}
+              {resultArtworks.map(renderArtwork)}
             </ul>
           </div>
         ) : null}
-      </div>
-    );
-  }
-
-  function renderLocalPanelContent() {
-    if (localNoResults) {
-      return (
-        <p className="px-3 py-4 text-sm text-muted-foreground" role="status">
-          No hay resultados para &ldquo;{trimmed}&rdquo;.
-        </p>
-      );
-    }
-
-    return (
-      <div className="py-1">
-        {matchedArtists.length > 0 && (
-          <div>
-            {sectionTitle("Artistas")}
-            <ul className="m-0 list-none p-0">
-              {matchedArtists.map((a) => (
-                <li key={a.slug}>
-                  <Link
-                    href={`${basePath}/artistas/${a.slug}`}
-                    className={cn(linkRow, "text-foreground")}
-                    onClick={closePanel}
-                  >
-                    {artistFullName(a)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {matchedArtworks.length > 0 && (
-          <div>
-            {sectionTitle("Obras")}
-            <ul className="m-0 list-none p-0">
-              {matchedArtworks.map((artwork) => {
-                const artist = artistBySlugFromList(artists, artwork.artistSlug);
-                const artistLabel = artist
-                  ? artistFullName(artist)
-                  : artwork.artistSlug;
-                return (
-                  <li key={artwork.slug}>
-                    <Link
-                      href={`${basePath}/obras/${artwork.slug}`}
-                      className={cn(linkRow)}
-                      onClick={closePanel}
-                    >
-                      <span className="font-medium text-foreground">
-                        {artwork.title}
-                      </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {artistLabel}
-                        {artwork.year != null ? ` · ${artwork.year}` : ""}
-                        {artwork.medium ? ` · ${artwork.medium}` : ""}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
       </div>
     );
   }
@@ -390,7 +312,7 @@ export function FlowHeaderSearch({ variant, artists, artworks }: FlowHeaderSearc
           )}
         >
           <div className="max-h-[min(20rem,55vh)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
-            {isDearte ? renderDeartePanelContent() : renderLocalPanelContent()}
+            {renderPanelContent()}
           </div>
         </div>
       )}

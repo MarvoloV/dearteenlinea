@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { searchDearteenlinea } from "@/services/search/dearte-search.service";
+import { searchQullqaGallery } from "@/services/search/qullqa-search.service";
 import type { GlobalSearchResult, SearchContext } from "@/types/search";
 
 const EMPTY_RESULTS: GlobalSearchResult = {
@@ -32,7 +33,7 @@ async function searchByContext(
     return searchDearteenlinea(query, signal);
   }
 
-  return EMPTY_RESULTS;
+  return searchQullqaGallery(query, signal);
 }
 
 export function useGlobalSearch({
