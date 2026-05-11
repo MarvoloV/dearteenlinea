@@ -19,10 +19,16 @@ import {
   type DearteenlineaObrasListView,
   type DearteenlineaObrasPagination,
 } from "@/lib/dearteenlinea-api";
-import { dearteCategoryOptions, mediumsDearteenlinea } from "@/lib/artwork-taxonomy";
+import {
+  dearteCategoryOptions,
+  mediumsDearteenlinea,
+  priceSliderDomainMax,
+  priceSliderDomainMin,
+} from "@/lib/artwork-taxonomy";
 import {
   artistBySlug,
   matchesArtworkQuery,
+  matchesPriceRangeFilter,
 } from "@/lib/artwork-utils";
 import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
 import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
@@ -46,6 +52,8 @@ type CatalogQuery = {
   apiMediums: string[];
   apiSearch: string;
   apiPage: number;
+  precioMin: number;
+  precioMax: number;
   initialCategoria?: ArtworkDearteCategory;
   initialMedio?: string;
 };
@@ -72,6 +80,27 @@ function parsePageParam(value: string | string[] | undefined): number {
   const raw = Number(firstParam(value));
   if (!Number.isFinite(raw) || raw < 1) return 1;
   return Math.trunc(raw);
+}
+
+function parsePriceParam(
+  value: string | string[] | undefined,
+  fallback: number,
+): number {
+  const raw = Number(firstParam(value));
+  if (!Number.isFinite(raw) || raw < 0) return fallback;
+  return Math.trunc(raw);
+}
+
+function priceQueryMin(precioMin: number, precioMax: number): number | null {
+  return precioMin > priceSliderDomainMin || precioMax < priceSliderDomainMax
+    ? precioMin
+    : null;
+}
+
+function priceQueryMax(precioMin: number, precioMax: number): number | null {
+  return precioMin > priceSliderDomainMin || precioMax < priceSliderDomainMax
+    ? precioMax
+    : null;
 }
 
 function normalizeCategoryParams(values: string[]): string[] {
@@ -178,6 +207,11 @@ function fallbackWorksList({
     ) {
       return false;
     }
+    if (
+      !matchesPriceRangeFilter(artwork, query.precioMin, query.precioMax)
+    ) {
+      return false;
+    }
     return true;
   });
 
@@ -203,6 +237,8 @@ function fallbackWorksList({
       search: query.apiSearch,
       categorias: selectedCategorySlugs,
       medios: selectedMediumSlugs,
+      precioMin: priceQueryMin(query.precioMin, query.precioMax),
+      precioMax: priceQueryMax(query.precioMin, query.precioMax),
     },
   };
 }
@@ -213,6 +249,8 @@ function catalogSearchKey(query: CatalogQuery): string {
     query.apiSearch,
     query.apiCategories.join(","),
     query.apiMediums.join(","),
+    query.precioMin,
+    query.precioMax,
   ].join("|");
 }
 
@@ -239,6 +277,8 @@ async function DearteArtworkFiltersSection({
       mediums={filters.mediums}
       selectedCategories={hideCategoryFilters ? [] : query.apiCategories}
       selectedMediums={hideMediumFilters ? [] : query.apiMediums}
+      selectedPriceMin={query.precioMin}
+      selectedPriceMax={query.precioMax}
       search={query.apiSearch}
       catalogPath={catalogPath}
       clearPath={clearPath}
@@ -265,6 +305,8 @@ async function DearteWorksListSection({
     categorias: query.apiCategories,
     medios: query.apiMediums,
     search: query.apiSearch,
+    precioMin: priceQueryMin(query.precioMin, query.precioMax),
+    precioMax: priceQueryMax(query.precioMin, query.precioMax),
   });
 
   const list = listResult.ok
@@ -275,6 +317,8 @@ async function DearteWorksListSection({
     search: list.appliedFilters.search || query.apiSearch,
     categorias: hideCategoryFilters ? [] : list.appliedFilters.categorias,
     medios: hideMediumFilters ? [] : list.appliedFilters.medios,
+    precioMin: list.appliedFilters.precioMin,
+    precioMax: list.appliedFilters.precioMax,
   };
   const pagination: DearteenlineaObrasPagination = list.pagination;
 
@@ -311,6 +355,8 @@ export async function DearteenlineaObrasCatalogPage({
   const apiMediums = routeMedium ? [routeMedium] : queryMediums;
   const apiSearch = firstParam(sp.search)?.trim() ?? "";
   const apiPage = parsePageParam(sp.page);
+  const precioMin = parsePriceParam(sp.precio_min, priceSliderDomainMin);
+  const precioMax = parsePriceParam(sp.precio_max, priceSliderDomainMax);
   const initialCategoria =
     fallbackInitialCategoria ?? firstCategoryId(queryCategories);
   const initialMedio =
@@ -320,6 +366,8 @@ export async function DearteenlineaObrasCatalogPage({
     apiMediums,
     apiSearch,
     apiPage,
+    precioMin,
+    precioMax,
     initialCategoria,
     initialMedio,
   };
@@ -339,6 +387,8 @@ export async function DearteenlineaObrasCatalogPage({
                 searchValue={apiSearch}
                 selectedCategories={hideCategoryFilters ? [] : apiCategories}
                 selectedMediums={hideMediumFilters ? [] : apiMediums}
+                selectedPriceMin={priceQueryMin(precioMin, precioMax)}
+                selectedPriceMax={priceQueryMax(precioMin, precioMax)}
                 catalogPath={catalogPath}
                 hideCategoryFilters={hideCategoryFilters}
                 hideMediumFilters={hideMediumFilters}

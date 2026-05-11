@@ -102,6 +102,8 @@ export type DearteenlineaAppliedArtworkFilters = {
   search: string;
   categorias: string[];
   medios: string[];
+  precioMin: number | null;
+  precioMax: number | null;
 };
 
 export type DearteenlineaObrasCatalogView = {
@@ -143,6 +145,8 @@ export type DearteenlineaObrasParams = {
   categorias?: string[];
   medios?: string[];
   search?: string;
+  precioMin?: number | null;
+  precioMax?: number | null;
 };
 
 export type DearteenlineaArtistDetailView = {
@@ -599,6 +603,15 @@ function normalizeObrasResponsePayload(
       medios: normalizeStringList(
         payload.filters.medios ?? payload.filters.medio,
       ),
+      precio_min:
+        typeof payload.filters.precio_min === "number"
+          ? payload.filters.precio_min
+          : null,
+      precio_max:
+        typeof payload.filters.precio_max === "number"
+          ? payload.filters.precio_max
+          : null,
+      price_active: payload.filters.price_active === true,
     },
     page: typeof payload.page === "number" ? payload.page : 1,
     pages: typeof payload.pages === "number" ? payload.pages : 1,
@@ -1202,10 +1215,20 @@ export async function getObras(
   const categorias = cleanCategoryStringList(params.categorias);
   const medios = cleanStringList(params.medios);
   const search = firstNonEmpty(params.search);
+  const precioMin =
+    typeof params.precioMin === "number" && Number.isFinite(params.precioMin)
+      ? Math.max(0, Math.trunc(params.precioMin))
+      : null;
+  const precioMax =
+    typeof params.precioMax === "number" && Number.isFinite(params.precioMax)
+      ? Math.max(0, Math.trunc(params.precioMax))
+      : null;
 
   if (categorias.length > 0) query.set("categoria", categorias.join(","));
   if (medios.length > 0) query.set("medios", medios.join(","));
   if (search) query.set("search", search);
+  if (precioMin !== null) query.set("precio_min", String(precioMin));
+  if (precioMax !== null) query.set("precio_max", String(precioMax));
 
   const result = await fetchDearteJson(`${OBRAS_PATH}?${query.toString()}`, {
     revalidate: LIST_REVALIDATE_SECONDS,
@@ -1475,6 +1498,14 @@ function obrasListViewFromDearte(
 ): DearteenlineaObrasListView {
   const requestedCategories = cleanCategoryStringList(params.categorias);
   const requestedMediums = cleanStringList(params.medios);
+  const requestedPrecioMin =
+    typeof params.precioMin === "number" && Number.isFinite(params.precioMin)
+      ? Math.trunc(params.precioMin)
+      : null;
+  const requestedPrecioMax =
+    typeof params.precioMax === "number" && Number.isFinite(params.precioMax)
+      ? Math.trunc(params.precioMax)
+      : null;
 
   return {
     artworks: obras.data.map((obra, index) => artworkFromObraListado(obra, index)),
@@ -1493,6 +1524,14 @@ function obrasListViewFromDearte(
           : requestedCategories,
       medios:
         obras.filters.medios.length > 0 ? obras.filters.medios : requestedMediums,
+      precioMin:
+        obras.filters.precio_min !== null
+          ? obras.filters.precio_min
+          : requestedPrecioMin,
+      precioMax:
+        obras.filters.precio_max !== null
+          ? obras.filters.precio_max
+          : requestedPrecioMax,
     },
   };
 }
@@ -1510,7 +1549,6 @@ export async function fetchDearteenlineaObrasList(
   params: DearteenlineaObrasParams = {},
 ): Promise<DearteenlineaApiResult<DearteenlineaObrasListView>> {
   const result = await getObras(params);
-  console.log("DEBUGPRINT[112]: dearteenlinea-api.ts:1473: result=", result)
   if (!result.ok) return result;
 
   return { ok: true, data: obrasListViewFromDearte(result.data, params) };

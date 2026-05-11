@@ -10,6 +10,8 @@ type DearteArtworkSearchProps = {
   searchValue: string;
   selectedCategories: string[];
   selectedMediums: string[];
+  selectedPriceMin?: number | null;
+  selectedPriceMax?: number | null;
   catalogPath: string;
   hideCategoryFilters?: boolean;
   hideMediumFilters?: boolean;
@@ -23,6 +25,8 @@ export function DearteArtworkSearch({
   searchValue,
   selectedCategories,
   selectedMediums,
+  selectedPriceMin,
+  selectedPriceMax,
   catalogPath,
   hideCategoryFilters = false,
   hideMediumFilters = false,
@@ -55,6 +59,8 @@ export function DearteArtworkSearch({
             search: trimmedDraft,
             categorias,
             medios,
+            precioMin: selectedPriceMin,
+            precioMax: selectedPriceMax,
             page: 1,
           }),
           { scroll: false },
@@ -63,7 +69,16 @@ export function DearteArtworkSearch({
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [catalogPath, categorias, medios, router, searchDraft, searchValue]);
+  }, [
+    catalogPath,
+    categorias,
+    medios,
+    router,
+    searchDraft,
+    searchValue,
+    selectedPriceMax,
+    selectedPriceMin,
+  ]);
 
   return (
     <div className="relative w-full md:max-w-[min(100%,18rem)] md:shrink-0 lg:max-w-xs">

@@ -48,6 +48,9 @@ export type DearteObrasFilters = {
   search: string | null;
   categorias: string[];
   medios: string[];
+  precio_min: number | null;
+  precio_max: number | null;
+  price_active: boolean;
 };
 
 export type DearteObrasResponse = {

@@ -58,7 +58,9 @@ export function DearteArtworkResults({
   const hasActiveFilters =
     appliedFilters.search.trim().length > 0 ||
     categorias.length > 0 ||
-    medios.length > 0;
+    medios.length > 0 ||
+    appliedFilters.precioMin !== null ||
+    appliedFilters.precioMax !== null;
 
   return (
     <div className="min-w-0 flex-1 space-y-4">
@@ -106,6 +108,8 @@ export function DearteArtworkResults({
               search: appliedFilters.search,
               categorias,
               medios,
+              precioMin: appliedFilters.precioMin,
+              precioMax: appliedFilters.precioMax,
               page: Math.max(1, pagination.page - 1),
             })}
             aria-disabled={pagination.page <= 1}
@@ -126,6 +130,8 @@ export function DearteArtworkResults({
                 search: appliedFilters.search,
                 categorias,
                 medios,
+                precioMin: appliedFilters.precioMin,
+                precioMax: appliedFilters.precioMax,
                 page,
               })}
               aria-current={page === pagination.page ? "page" : undefined}
@@ -145,6 +151,8 @@ export function DearteArtworkResults({
               search: appliedFilters.search,
               categorias,
               medios,
+              precioMin: appliedFilters.precioMin,
+              precioMax: appliedFilters.precioMax,
               page: Math.min(pagination.totalPages, pagination.page + 1),
             })}
             aria-disabled={pagination.page >= pagination.totalPages}
