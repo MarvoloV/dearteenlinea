@@ -23,6 +23,14 @@ export type DearteFiltrosObrasResponse = {
   medios: DearteMediumRef[];
 };
 
+export type DeartePrice = {
+  html: string | null;
+  regular: string | null;
+  sale: string | null;
+  current: string | null;
+  currency: string | null;
+};
+
 export type DearteObraListado = {
   id: number;
   titulo: string;
@@ -33,6 +41,7 @@ export type DearteObraListado = {
   medio: DearteMediumRef | null;
   categorias: DearteCategoryRef[];
   dimensiones: string | null;
+  precio: DeartePrice | null;
 };
 
 export type DearteObrasFilters = {

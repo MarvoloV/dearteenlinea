@@ -261,11 +261,12 @@ async function DearteWorksListSection({
 }) {
   const listResult = await fetchDearteenlineaObrasList({
     page: query.apiPage,
-    perPage: 9,
+    perPage: 12,
     categorias: query.apiCategories,
     medios: query.apiMediums,
     search: query.apiSearch,
   });
+
   const list = listResult.ok
     ? listResult.data
     : fallbackWorksList({ query, hideCategoryFilters, hideMediumFilters });

@@ -16,21 +16,7 @@ import {
   fetchDearteenlineaLatestArtworks,
 } from "@/lib/dearteenlinea-api";
 import { flowHeroImages } from "@/lib/flow-hero-assets";
-import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
-import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
-import { latestArtworks, latestArtworksInCategory } from "@/lib/artwork-utils";
-import type { Artist } from "@/lib/types/artist";
-import type { Artwork, ArtworkDearteCategory } from "@/lib/types/artwork";
-
-function fallbackCategoryArtworks(category: ArtworkDearteCategory): {
-  artworks: Artwork[];
-  artists: Artist[];
-} {
-  return {
-    artworks: latestArtworksInCategory(mockArtworksDearteenlinea, category, 5),
-    artists: mockArtistsDearteenlinea,
-  };
-}
+import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
 const latestTitle = (
   <>
@@ -86,17 +72,12 @@ function categoryTitle(category: ArtworkDearteCategory): ReactNode {
 
 async function LatestArtworksSection() {
   const latestFromApi = await fetchDearteenlineaLatestArtworks(5);
-  const latest = latestFromApi.ok
-    ? latestFromApi.data.artworks
-    : latestArtworks(mockArtworksDearteenlinea, 5);
-  const latestArtists = latestFromApi.ok
-    ? latestFromApi.data.artists
-    : mockArtistsDearteenlinea;
+  if (!latestFromApi.ok) return null;
 
   return (
     <HomeLatestArtworksSection
-      artworks={latest}
-      artists={latestArtists}
+      artworks={latestFromApi.data.artworks}
+      artists={latestFromApi.data.artists}
       basePath="/dearteenlinea"
       flow="dearteenlinea"
       variant="violet"
@@ -106,14 +87,14 @@ async function LatestArtworksSection() {
 
 async function ExploreByMediumSection() {
   const mediumsFromApi = await fetchDearteenlineaHomeMediums();
-  const homeMediums = mediumsFromApi.ok ? mediumsFromApi.data : undefined;
+  if (!mediumsFromApi.ok) return null;
 
   return (
     <HomeExploreByMediumSection
       flow="dearteenlinea"
       basePath="/dearteenlinea"
       variant="rose"
-      mediums={homeMediums}
+      mediums={mediumsFromApi.data}
     />
   );
 }
@@ -126,15 +107,13 @@ async function HomeCategorySection({
   variant: "teal" | "amber" | "sky";
 }) {
   const categoryFromApi = await fetchDearteenlineaCategoryArtworks(category);
-  const categoryData = categoryFromApi.ok
-    ? categoryFromApi.data
-    : fallbackCategoryArtworks(category);
+  if (!categoryFromApi.ok) return null;
 
   return (
     <HomeDearteCategorySection
       category={category}
-      artworks={categoryData.artworks}
-      artists={categoryData.artists}
+      artworks={categoryFromApi.data.artworks}
+      artists={categoryFromApi.data.artists}
       variant={variant}
     />
   );

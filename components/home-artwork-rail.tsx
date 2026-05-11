@@ -34,10 +34,12 @@ export function HomeArtworkRail({
     startClientX: 0,
     startScrollLeft: 0,
     moved: false,
+    captured: false,
   });
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLUListElement>) => {
     if (!scrollRef.current) return;
+    if (!e.isPrimary || e.button !== 0) return;
     const t = e.target as HTMLElement | null;
     /** No capturar el puntero si el usuario usa los botones del carrusel de imágenes/vídeo (evita que dejen de funcionar). */
     if (t?.closest("button")) {
@@ -50,27 +52,39 @@ export function HomeArtworkRail({
       startClientX: e.clientX,
       startScrollLeft: el.scrollLeft,
       moved: false,
+      captured: false,
     };
-    el.setPointerCapture(e.pointerId);
   }, []);
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLUListElement>) => {
     if (!dragRef.current.active || !scrollRef.current) return;
+    if (e.pointerId !== dragRef.current.pointerId) return;
     const dx = e.clientX - dragRef.current.startClientX;
     if (Math.abs(dx) > DRAG_THRESHOLD_PX) {
       dragRef.current.moved = true;
+    }
+    if (!dragRef.current.moved) return;
+    if (!dragRef.current.captured) {
+      scrollRef.current.setPointerCapture(e.pointerId);
+      dragRef.current.captured = true;
     }
     scrollRef.current.scrollLeft = dragRef.current.startScrollLeft - dx;
   }, []);
 
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLUListElement>) => {
     if (!dragRef.current.active) return;
+    if (e.pointerId !== dragRef.current.pointerId) return;
     const didDrag = dragRef.current.moved;
+    const didCapture = dragRef.current.captured;
     dragRef.current.active = false;
-    try {
-      scrollRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
+    if (didCapture) {
+      try {
+        if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
+          scrollRef.current.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        /* ignore */
+      }
     }
     if (didDrag) {
       dragSuppressedRef.current = true;
@@ -109,8 +123,7 @@ export function HomeArtworkRail({
     >
       {artworks.map((artwork) => {
         const artist = artistBySlug(artists, artwork.artistSlug);
-        const href =
-          artwork.externalUrl?.trim() || `${basePath}/obras/${artwork.slug}`;
+        const href = `${basePath}/obras/${artwork.slug}`;
         return (
           <li
             key={artwork.slug}

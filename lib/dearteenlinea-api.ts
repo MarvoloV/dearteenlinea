@@ -525,6 +525,18 @@ function normalizeObraListadoMedium(raw: unknown): DearteObraListado["medio"] {
   return normalizeTaxonomyTerm(raw);
 }
 
+function normalizeDeartePrice(raw: unknown): DearteObraListado["precio"] {
+  if (!isRecord(raw)) return null;
+
+  return {
+    html: stringOrNull(raw.html),
+    regular: stringOrNull(raw.regular),
+    sale: stringOrNull(raw.sale),
+    current: stringOrNull(raw.current),
+    currency: stringOrNull(raw.currency),
+  };
+}
+
 function normalizeObraListado(
   raw: UnknownRecord,
   index: number,
@@ -539,6 +551,7 @@ function normalizeObraListado(
     medio: normalizeObraListadoMedium(raw.medio),
     categorias: normalizeTaxonomyTermArray(raw.categorias) ?? [],
     dimensiones: stringOrNull(raw.dimensiones),
+    precio: normalizeDeartePrice(raw.precio),
   };
 }
 
@@ -671,7 +684,7 @@ function artworkFromObra(obra: ObraDisponible, index: number): Artwork {
     firstNonEmpty(obra.imagen, obra.imagen_full) ?? fallbackImageFor(index);
 
   return {
-    slug: `dearte-${obra.id}`,
+    slug: getSlugFromUrl(firstNonEmpty(obra.url)) ?? `dearte-${obra.id}`,
     title,
     artistSlug: artistSlugFromObra(obra),
     externalUrl: firstNonEmpty(obra.url),
@@ -729,6 +742,28 @@ function artistFromObraListadoRef(raw: DearteObraListado["artista"]): Artist | n
   };
 }
 
+function numericDeartePrice(value: string | null | undefined): number | null {
+  const raw = firstNonEmpty(value);
+  if (!raw) return null;
+
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+
+  const amount = Number(digits);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function formatDearteCurrentPrice(
+  price: DearteObraListado["precio"],
+): { label: string; amount: number } | null {
+  const amount = numericDeartePrice(price?.current);
+  if (amount === null) return null;
+
+  const currency = normalizeText(price?.currency) ?? "USD";
+  const formatted = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return { label: `${currency} ${formatted}`, amount };
+}
+
 function artworkFromObraListado(
   obra: DearteObraListado | DearteObraRelacionada,
   index: number,
@@ -736,6 +771,7 @@ function artworkFromObraListado(
   const title = normalizeText(obra.titulo) ?? "Obra sin título";
   const medium = normalizeText(obra.medio?.nombre) ?? "";
   const imageUrl = firstNonEmpty(obra.imagen) ?? fallbackImageFor(index);
+  const currentPrice = formatDearteCurrentPrice(obra.precio);
 
   return {
     slug: firstNonEmpty(obra.slug) ?? `dearte-obra-${obra.id}`,
@@ -752,6 +788,9 @@ function artworkFromObraListado(
     categories: categoryTermsForArtwork(obra.categorias),
     technique: medium,
     dimensions: normalizeText(obra.dimensiones),
+    priceLabel: currentPrice?.label,
+    priceMin: currentPrice?.amount,
+    priceMax: currentPrice?.amount,
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
   };
@@ -798,6 +837,26 @@ function artworkFromCategoriaObra(
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
   };
+}
+
+
+function getSlugFromUrl(url?: string | null): string | null {
+  if (!url) return null;
+
+  try {
+    const pathname = new URL(url).pathname;
+    const parts = pathname.split("/").filter(Boolean);
+
+    const obrasIndex = parts.indexOf("obras");
+
+    if (obrasIndex !== -1 && parts[obrasIndex + 1]) {
+      return parts[obrasIndex + 1];
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function artistsFromObras(obras: ObraDisponible[]): Artist[] {
@@ -1451,6 +1510,7 @@ export async function fetchDearteenlineaObrasList(
   params: DearteenlineaObrasParams = {},
 ): Promise<DearteenlineaApiResult<DearteenlineaObrasListView>> {
   const result = await getObras(params);
+  console.log("DEBUGPRINT[112]: dearteenlinea-api.ts:1473: result=", result)
   if (!result.ok) return result;
 
   return { ok: true, data: obrasListViewFromDearte(result.data, params) };
