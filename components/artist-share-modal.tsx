@@ -26,7 +26,7 @@ function shareUrls(pageUrl: string, artistName: string) {
   const encodedUrl = encodeURIComponent(pageUrl);
   return {
     twitter: `https://twitter.com/intent/tweet?text=${encodedLine}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedLine}`,
     whatsapp: `https://wa.me/?text=${encodedLine}`,
   };
 }

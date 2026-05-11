@@ -1355,8 +1355,6 @@ export async function getObraDetalle(
     `${OBRAS_PATH}/${encodeURIComponent(cleanSlug)}`,
   );
   if (!result.ok) return result;
-
-  console.log("DEBUGPRINT[115]: dearteenlinea-api.ts:1354: result=", result)
   const artwork = normalizeObraDetallePayload(result.data);
   if (!artwork) {
     return errorResult("La respuesta del detalle de obra no es válida.");
