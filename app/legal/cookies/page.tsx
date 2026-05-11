@@ -4,18 +4,26 @@ import path from "node:path";
 import Link from "next/link";
 
 import { CookiesPolicyBody } from "@/components/cookies-policy-body";
+import { buildSeoMetadata, stripHtml } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Política de cookies | dearteenlinea",
-  description:
-    "Información sobre el uso de cookies en el sitio dearteenlinea y qullqa gallery.",
-};
+const COOKIES_PATH = "assets-cursor/dearteenlinea/cookies.md";
+
+function readCookiesPolicy(): string {
+  return fs.readFileSync(path.join(process.cwd(), COOKIES_PATH), "utf-8");
+}
+
+export function generateMetadata(): Metadata {
+  const raw = readCookiesPolicy();
+
+  return buildSeoMetadata({
+    title: "Política de cookies | De Arte en Línea",
+    description: stripHtml(raw),
+    path: "/legal/cookies",
+  });
+}
 
 export default function CookiesPolicyPage() {
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "assets-cursor/dearteenlinea/cookies.md"),
-    "utf-8",
-  );
+  const raw = readCookiesPolicy();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">

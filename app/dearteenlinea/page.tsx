@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import type { Metadata } from "next";
 
 import { DearteenlineaLogo } from "@/components/dearteenlinea-logo";
 import { HomeDearteCategorySection } from "@/components/home-dearte-category-section";
@@ -16,6 +17,7 @@ import {
   fetchDearteenlineaLatestArtworks,
 } from "@/lib/dearteenlinea-api";
 import { getHomeConfig } from "@/lib/home-config";
+import { buildSeoMetadata } from "@/lib/seo";
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
 const latestTitle = (
@@ -117,6 +119,19 @@ async function HomeCategorySection({
       variant={variant}
     />
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const homeConfig = await getHomeConfig();
+  const hero = homeConfig.heroes.dearte;
+
+  return buildSeoMetadata({
+    title: "De Arte en Línea | Galería de arte online",
+    description: hero.description,
+    path: "/dearteenlinea",
+    image: hero.imageUrl,
+    imageAlt: hero.imageAlt,
+  });
 }
 
 export default async function DearteenlineaPage() {

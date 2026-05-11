@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { FlowHeader } from "@/components/flow-header";
 import { FlowHeroBanner } from "@/components/flow-hero-banner";
 import { HomeExploreByMediumSection } from "@/components/home-explore-medium-section";
@@ -5,6 +7,21 @@ import { HomeLatestArtworksSection } from "@/components/home-latest-artworks-sec
 import { QullqaProductsSection } from "@/components/qullqa-products-section";
 import { getHomeConfig } from "@/lib/home-config";
 import { fetchQullqaGalleryHome } from "@/lib/qullqa-gallery-api";
+import { buildSeoMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const homeConfig = await getHomeConfig();
+  const hero = homeConfig.heroes.qullqa;
+
+  return buildSeoMetadata({
+    title: "Qullqa Gallery | Espacio público de obras",
+    description: hero.description,
+    path: "/qullqa-gallery",
+    image: hero.imageUrl,
+    imageAlt: hero.imageAlt,
+    siteName: "Qullqa Gallery",
+  });
+}
 
 export default async function QullqaGalleryPage() {
   const [home, homeConfig] = await Promise.all([

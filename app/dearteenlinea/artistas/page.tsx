@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { ArtistCatalog } from "@/components/artist-catalog";
 import { FlowHeader } from "@/components/flow-header";
@@ -9,6 +10,14 @@ import {
   fetchDearteenlineaArtists,
 } from "@/lib/dearteenlinea-api";
 import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
+import { buildSeoMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildSeoMetadata({
+  title: "Artistas | De Arte en Línea",
+  description:
+    "Conoce artistas consolidados, emergentes y de mercado secundario disponibles en De Arte en Línea.",
+  path: "/dearteenlinea/artistas",
+});
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

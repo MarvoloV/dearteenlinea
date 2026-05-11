@@ -9,6 +9,11 @@ import {
   artworksByArtistSlug,
 } from "@/lib/artist-utils";
 import { fetchQullqaGallerySearchIndex } from "@/lib/qullqa-gallery-api";
+import {
+  buildArtistJsonLd,
+  buildSeoMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -20,19 +25,33 @@ export async function generateMetadata({
   const { slug } = await params;
   const index = await fetchQullqaGallerySearchIndex();
   if (!index.ok) {
-    return { title: "Artista" };
+    return buildSeoMetadata({
+      title: "Artista | Qullqa Gallery",
+      description: "Ficha de artista en Qullqa Gallery.",
+      path: `/qullqa-gallery/artistas/${slug}`,
+      siteName: "Qullqa Gallery",
+    });
   }
   const artist = artistBySlugFromList(index.data.artists, slug);
   if (!artist) {
-    return { title: "Artista" };
+    return buildSeoMetadata({
+      title: "Artista | Qullqa Gallery",
+      description: "Ficha de artista en Qullqa Gallery.",
+      path: `/qullqa-gallery/artistas/${slug}`,
+      siteName: "Qullqa Gallery",
+    });
   }
   const name = artistFullName(artist);
-  return {
-    title: `${name} | qullqa gallery`,
+  return buildSeoMetadata({
+    title: `${name} | Qullqa Gallery`,
     description:
-      artist.description?.slice(0, 160) ??
-      `Ficha de ${name} en qullqa gallery.`,
-  };
+      artist.description ?? `Ficha de ${name} en Qullqa Gallery.`,
+    path: `/qullqa-gallery/artistas/${artist.slug}`,
+    image: artist.imageUrl,
+    imageAlt: name,
+    siteName: "Qullqa Gallery",
+    type: "profile",
+  });
 }
 
 export default async function QullqaGalleryArtistPage({ params }: PageProps) {
@@ -65,6 +84,17 @@ export default async function QullqaGalleryArtistPage({ params }: PageProps) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(
+            buildArtistJsonLd({
+              artist,
+              path: `/qullqa-gallery/artistas/${artist.slug}`,
+            }),
+          ),
+        }}
+      />
       <FlowHeader variant="qullqa-gallery" />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">

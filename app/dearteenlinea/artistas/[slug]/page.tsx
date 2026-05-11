@@ -14,6 +14,11 @@ import {
   artistFullName,
   artworksByArtistSlug,
 } from "@/lib/artist-utils";
+import {
+  buildArtistJsonLd,
+  buildSeoMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -38,14 +43,22 @@ export async function generateMetadata({
   const { slug } = await params;
   const data = await resolveArtistPageData(slug);
   if (!data) {
-    return { title: "Artista" };
+    return buildSeoMetadata({
+      title: "Artista | De Arte en Línea",
+      description: "Ficha de artista en De Arte en Línea.",
+      path: `/dearteenlinea/artistas/${slug}`,
+    });
   }
   const name = artistFullName(data.artist);
   const description = dearteenlineaArtistMetadataDescription(data.artist);
-  return {
-    title: `${name} | dearteenlinea`,
-    description: description?.slice(0, 160) ?? `Ficha de ${name} en dearteenlinea.`,
-  };
+  return buildSeoMetadata({
+    title: `${name} | De Arte en Línea`,
+    description: description ?? `Ficha de ${name} en De Arte en Línea.`,
+    path: `/dearteenlinea/artistas/${data.artist.slug}`,
+    image: data.artist.imageUrl,
+    imageAlt: name,
+    type: "profile",
+  });
 }
 
 export default async function DearteenlineaArtistPage({ params }: PageProps) {
@@ -55,6 +68,17 @@ export default async function DearteenlineaArtistPage({ params }: PageProps) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(
+            buildArtistJsonLd({
+              artist: data.artist,
+              path: `/dearteenlinea/artistas/${data.artist.slug}`,
+            }),
+          ),
+        }}
+      />
       <FlowHeader variant="dearteenlinea" />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">

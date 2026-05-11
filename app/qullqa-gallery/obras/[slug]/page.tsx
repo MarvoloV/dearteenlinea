@@ -5,6 +5,11 @@ import { ArtworkDetail } from "@/components/artwork-detail";
 import { FlowHeader } from "@/components/flow-header";
 import { artistFullName } from "@/lib/artist-utils";
 import { fetchQullqaGalleryArtworkDetail } from "@/lib/qullqa-gallery-api";
+import {
+  buildArtworkJsonLd,
+  buildSeoMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,17 +21,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const detail = await fetchQullqaGalleryArtworkDetail(slug);
   if (!detail.ok) {
-    return { title: "Obra" };
+    return buildSeoMetadata({
+      title: "Obra | Qullqa Gallery",
+      description: "Ficha de obra en Qullqa Gallery.",
+      path: `/qullqa-gallery/obras/${slug}`,
+      siteName: "Qullqa Gallery",
+    });
   }
   const { artwork, artist } = detail.data;
   const name = artistFullName(artist);
-  const desc =
-    artwork.description?.slice(0, 160) ??
-    `${artwork.title} · ${name} · qullqa gallery`;
-  return {
-    title: `${artwork.title} · ${name} | qullqa gallery`,
+  const fallbackDescription = `${artwork.title}${name ? ` de ${name}` : ""}${artwork.medium ? `, ${artwork.medium}` : ""}${artwork.dimensions ? `, ${artwork.dimensions}` : ""}`;
+  const desc = artwork.description ?? `${fallbackDescription}.`;
+
+  return buildSeoMetadata({
+    title: `${artwork.title} | ${name} | Qullqa Gallery`,
     description: desc,
-  };
+    path: `/qullqa-gallery/obras/${artwork.slug}`,
+    image: artwork.imageUrls[0],
+    imageAlt: artwork.title,
+    siteName: "Qullqa Gallery",
+    type: "article",
+  });
 }
 
 export default async function QullqaGalleryObraPage({ params }: PageProps) {
@@ -36,6 +51,21 @@ export default async function QullqaGalleryObraPage({ params }: PageProps) {
 
   return (
     <>
+      {detail.ok ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(
+              buildArtworkJsonLd({
+                artwork: detail.data.artwork,
+                artist: detail.data.artist,
+                path: `/qullqa-gallery/obras/${detail.data.artwork.slug}`,
+                artistPathBase: "/qullqa-gallery/artistas",
+              }),
+            ),
+          }}
+        />
+      ) : null}
       <FlowHeader variant="qullqa-gallery" />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">

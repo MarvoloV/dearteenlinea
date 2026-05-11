@@ -5,12 +5,14 @@ import Link from "next/link";
 
 import { LegalDocumentBody } from "@/components/legal-document-body";
 import { ReclamacionesForm } from "@/components/reclamaciones-form";
+import { buildSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Libro de reclamaciones | dearteenlinea",
+export const metadata: Metadata = buildSeoMetadata({
+  title: "Libro de reclamaciones | De Arte en Línea",
   description:
-    "Libro de reclamaciones virtual: DEARTE EIRL. Mismo canal para dearteenlinea y qullqa gallery.",
-};
+    "Registra una queja o reclamo relacionado con De Arte en Línea.",
+  path: "/legal/reclamaciones",
+});
 
 const MARKER = "\nLos campos marcados con * son obligatorios";
 

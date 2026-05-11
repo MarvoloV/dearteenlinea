@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { DearteenlineaLogo } from "@/components/dearteenlinea-logo";
 import { QullqaWordmark } from "@/components/qullqa-wordmark";
+import type { NosotrosPageContent } from "@/lib/nosotros-page";
 import { qullqaProducts } from "@/lib/qullqa-products";
 import {
   SITE_INSTAGRAM_DEARTEENLINEA,
@@ -9,12 +10,6 @@ import {
   SITE_QULLQA_WEB,
 } from "@/lib/site-social";
 import { cn } from "@/lib/utils";
-
-/** Imagen de archivo (reemplazar por foto oficial de Denise cuando exista). */
-const DENISE_PLACEHOLDER_SRC =
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=960&q=85";
-const DENISE_PLACEHOLDER_ALT =
-  "Imagen de referencia; retrato de archivo hasta incorporar fotografía oficial.";
 
 function InstagramLine({
   label,
@@ -44,7 +39,7 @@ function InstagramLine({
   );
 }
 
-export function NosotrosPage() {
+export function NosotrosPage({ content }: { content: NosotrosPageContent }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
       <header className="mb-14 max-w-2xl space-y-2">
@@ -77,25 +72,11 @@ export function NosotrosPage() {
           </div>
 
           <div className="grid gap-10 md:grid-cols-2 md:gap-12 md:items-start">
-            <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem]">
-              <p>
-                <strong className="font-medium text-foreground">
-                  De Arte en Línea
-                </strong>{" "}
-                es la primera plataforma del Perú para la difusión y venta online
-                de obras de arte moderno y contemporáneo. Lanzada en 2012 por{" "}
-                <strong className="font-medium text-foreground">
-                  Denise Dourojeanni
-                </strong>
-                .
-              </p>
-              <p>
-                La plataforma busca ofrecer una gama amplia de obras en
-                distintos medios y de artistas en diferentes etapas de su
-                carrera: desde nombres consolidados en el circuito local e
-                internacional hasta artistas con proyección profesional y
-                talentos jóvenes al inicio de su trayectoria.
-              </p>
+            <div className="space-y-4">
+              <div
+                className="text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem] [&_a]:underline-offset-4 [&_a:hover]:underline [&_b]:font-medium [&_b]:text-foreground [&_p]:mb-4 [&_p:last-child]:mb-0 [&_strong]:font-medium [&_strong]:text-foreground"
+                dangerouslySetInnerHTML={{ __html: content.contentHtml }}
+              />
               <InstagramLine
                 label="dearteenlinea"
                 href={SITE_INSTAGRAM_DEARTEENLINEA}
@@ -105,17 +86,18 @@ export function NosotrosPage() {
             <figure className="overflow-hidden rounded-xl border border-border/60 bg-background shadow-sm">
               <div className="relative aspect-[4/5] w-full">
                 <Image
-                  src={DENISE_PLACEHOLDER_SRC}
-                  alt={DENISE_PLACEHOLDER_ALT}
+                  src={content.imageSrc}
+                  alt={content.imageAlt}
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 768px) 100vw, 400px"
-                  unoptimized
                 />
               </div>
-              <figcaption className="border-t border-border/60 px-4 py-3 text-center text-xs italic text-muted-foreground">
-                Espacio reservado para fotografía oficial de Denise.
-              </figcaption>
+              {content.isFallbackImage ? (
+                <figcaption className="border-t border-border/60 px-4 py-3 text-center text-xs italic text-muted-foreground">
+                  Espacio reservado para fotografía oficial de Denise.
+                </figcaption>
+              ) : null}
             </figure>
           </div>
         </section>

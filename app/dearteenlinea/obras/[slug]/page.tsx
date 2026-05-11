@@ -16,6 +16,11 @@ import {
   otherArtworksSameArtist,
   otherArtworksSameMedium,
 } from "@/lib/artwork-utils";
+import {
+  buildArtworkJsonLd,
+  buildSeoMetadata,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -61,16 +66,28 @@ export async function generateMetadata({
   const { slug } = await params;
   const data = await resolveArtworkPageData(slug);
   if (!data) {
-    return { title: "Obra" };
+    return buildSeoMetadata({
+      title: "Obra | De Arte en Línea",
+      description: "Ficha de obra en De Arte en Línea.",
+      path: `/dearteenlinea/obras/${slug}`,
+    });
   }
-  const name = data.artist ? artistFullName(data.artist) : "Artista";
+  const name = data.artist ? artistFullName(data.artist) : "";
+  const fallbackDescription = `${data.artwork.title}${name ? ` de ${name}` : ""}${data.artwork.medium ? `, ${data.artwork.medium}` : ""}${data.artwork.dimensions ? `, ${data.artwork.dimensions}` : ""}`;
   const desc =
-    dearteenlineaArtworkMetadataDescription(data.artwork)?.slice(0, 160) ??
-    `${data.artwork.title} · ${name} · dearteenlinea`;
-  return {
-    title: `${data.artwork.title} · ${name} | dearteenlinea`,
+    dearteenlineaArtworkMetadataDescription(data.artwork) ??
+    `${fallbackDescription}.`;
+
+  return buildSeoMetadata({
+    title: name
+      ? `${data.artwork.title} | ${name} | De Arte en Línea`
+      : `${data.artwork.title} | De Arte en Línea`,
     description: desc,
-  };
+    path: `/dearteenlinea/obras/${data.artwork.slug}`,
+    image: data.artwork.imageUrls[0],
+    imageAlt: data.artwork.title,
+    type: "article",
+  });
 }
 
 export default async function DearteenlineaObraPage({ params }: PageProps) {
@@ -80,6 +97,18 @@ export default async function DearteenlineaObraPage({ params }: PageProps) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: serializeJsonLd(
+            buildArtworkJsonLd({
+              artwork: data.artwork,
+              artist: data.artist,
+              path: `/dearteenlinea/obras/${data.artwork.slug}`,
+            }),
+          ),
+        }}
+      />
       <FlowHeader variant="dearteenlinea" />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">

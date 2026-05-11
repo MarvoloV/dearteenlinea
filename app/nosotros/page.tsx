@@ -11,21 +11,21 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildSeoMetadata({
     title: `${content.title} | De Arte en Línea`,
     description: stripHtml(content.contentHtml),
-    path: "/dearteenlinea/nosotros",
+    path: "/nosotros",
     image: content.imageSrc,
     imageAlt: content.imageAlt,
   });
 }
 
-export default async function DearteenlineaNosotrosPage() {
+export default async function NosotrosRootPage() {
   const content = await getNosotrosPage();
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col bg-background">
       <FlowHeader variant="dearteenlinea" />
       <main className="flex-1">
         <NosotrosPage content={content} />
       </main>
-    </>
+    </div>
   );
 }

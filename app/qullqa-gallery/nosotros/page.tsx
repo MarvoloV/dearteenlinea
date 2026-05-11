@@ -2,19 +2,30 @@ import type { Metadata } from "next";
 
 import { FlowHeader } from "@/components/flow-header";
 import { NosotrosPage } from "@/components/nosotros-page";
+import { getNosotrosPage } from "@/lib/nosotros-page";
+import { buildSeoMetadata, stripHtml } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Nosotros | qullqa gallery",
-  description:
-    "De Arte en Línea y Qullqa: historia, colaboración y enlaces a productos Collector y Studio.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getNosotrosPage();
 
-export default function QullqaNosotrosPage() {
+  return buildSeoMetadata({
+    title: `${content.title} | De Arte en Línea`,
+    description: stripHtml(content.contentHtml),
+    path: "/qullqa-gallery/nosotros",
+    image: content.imageSrc,
+    imageAlt: content.imageAlt,
+    siteName: "Qullqa Gallery",
+  });
+}
+
+export default async function QullqaNosotrosPage() {
+  const content = await getNosotrosPage();
+
   return (
     <>
       <FlowHeader variant="qullqa-gallery" />
       <main className="flex-1">
-        <NosotrosPage />
+        <NosotrosPage content={content} />
       </main>
     </>
   );

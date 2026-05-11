@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 
 import { ContactoPage } from "@/components/contacto-page";
 import { FlowHeader } from "@/components/flow-header";
+import { buildSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contacto | qullqa gallery",
+export const metadata: Metadata = buildSeoMetadata({
+  title: "Contacto | De Arte en Línea",
   description:
-    "Información de contacto y formulario para qullqa gallery: celular, correo y mensaje.",
-};
+    "Contáctanos para consultas sobre obras, artistas o información de De Arte en Línea.",
+  path: "/qullqa-gallery/contacto",
+  siteName: "Qullqa Gallery",
+});
 
 export default function QullqaContactoPage() {
   return (

@@ -2,15 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { fetchDearteenlineaLegalPage } from "@/lib/dearteenlinea-legal-page";
-
-export const metadata: Metadata = {
-  title: "Términos y condiciones | dearteenlinea",
-  description:
-    "Términos y condiciones de uso del sitio dearteenlinea y qullqa gallery.",
-};
+import { buildSeoMetadata, stripHtml } from "@/lib/seo";
 
 const FALLBACK_TITLE = "Términos y condiciones";
 const TERMS_SLUG = "terminos-y-condiciones";
+const FALLBACK_DESCRIPTION =
+  "Términos y condiciones de uso del sitio De Arte en Línea y qullqa gallery.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const legalPage = await fetchDearteenlineaLegalPage({
+    slug: TERMS_SLUG,
+    fallbackTitle: FALLBACK_TITLE,
+  });
+
+  return buildSeoMetadata({
+    title: "Términos y condiciones | De Arte en Línea",
+    description: legalPage?.contentHtml
+      ? stripHtml(legalPage.contentHtml)
+      : FALLBACK_DESCRIPTION,
+    path: "/legal/terminos",
+  });
+}
 
 export default async function TerminosPage() {
   const legalPage = await fetchDearteenlineaLegalPage({

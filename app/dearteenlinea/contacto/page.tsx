@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 
 import { ContactoPage } from "@/components/contacto-page";
 import { FlowHeader } from "@/components/flow-header";
+import { buildSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contacto | dearteenlinea",
+export const metadata: Metadata = buildSeoMetadata({
+  title: "Contacto | De Arte en Línea",
   description:
-    "Información de contacto y formulario para dearteenlinea: celular, correo y mensaje.",
-};
+    "Contáctanos para consultas sobre obras, artistas o información de De Arte en Línea.",
+  path: "/dearteenlinea/contacto",
+});
 
 export default function DearteenlineaContactoPage() {
   return (

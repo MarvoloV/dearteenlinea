@@ -2,15 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { fetchDearteenlineaLegalPage } from "@/lib/dearteenlinea-legal-page";
-
-export const metadata: Metadata = {
-  title: "Política de privacidad | dearteenlinea",
-  description:
-    "Política de privacidad y tratamiento de datos personales en dearteenlinea y qullqa gallery.",
-};
+import { buildSeoMetadata, stripHtml } from "@/lib/seo";
 
 const FALLBACK_TITLE = "Política de privacidad";
 const PRIVACY_SLUG = "politica-de-privacidad";
+const FALLBACK_DESCRIPTION =
+  "Política de privacidad y tratamiento de datos personales en De Arte en Línea y Qullqa Gallery.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const legalPage = await fetchDearteenlineaLegalPage({
+    slug: PRIVACY_SLUG,
+    fallbackTitle: FALLBACK_TITLE,
+  });
+
+  return buildSeoMetadata({
+    title: "Política de privacidad | De Arte en Línea",
+    description: legalPage?.contentHtml
+      ? stripHtml(legalPage.contentHtml)
+      : FALLBACK_DESCRIPTION,
+    path: "/legal/privacidad",
+  });
+}
 
 export default async function PrivacidadPage() {
   const legalPage = await fetchDearteenlineaLegalPage({
