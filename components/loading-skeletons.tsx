@@ -244,3 +244,79 @@ export function DearteenlineaArtistsCatalogSkeleton({
     </div>
   );
 }
+
+export function ArtworkDetailSkeleton() {
+  return (
+    <div className="space-y-10 md:space-y-12">
+      <div>
+        <SkeletonBlock className="h-5 w-16" />
+      </div>
+
+      <section className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-start md:gap-10 lg:gap-12">
+        <div className="mx-auto w-full max-w-xl md:mx-0 md:max-w-none">
+          <SkeletonBlock className="aspect-[3/4] w-full rounded-lg border border-border/80" />
+        </div>
+
+        <div className="min-w-0 space-y-5">
+          <SkeletonBlock className="h-8 w-3/4 md:h-9" />
+
+          <div className="flex max-w-md items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-2 pr-3">
+            <SkeletonBlock className="size-11 shrink-0 rounded-full" />
+            <div className="space-y-1.5">
+              <SkeletonBlock className="h-2.5 w-12" />
+              <SkeletonBlock className="h-3.5 w-24" />
+            </div>
+          </div>
+
+          <div className="grid gap-2 text-sm md:text-[15px]">
+            <div className="flex gap-2">
+              <SkeletonBlock className="h-3.5 w-20" />
+              <SkeletonBlock className="h-3.5 w-28" />
+            </div>
+            <div className="flex gap-2">
+              <SkeletonBlock className="h-3.5 w-14" />
+              <SkeletonBlock className="h-3.5 w-20" />
+            </div>
+            <div className="flex gap-2">
+              <SkeletonBlock className="h-3.5 w-20" />
+              <SkeletonBlock className="h-3.5 w-32" />
+            </div>
+            <div className="flex gap-2">
+              <SkeletonBlock className="h-3.5 w-24" />
+              <SkeletonBlock className="h-3.5 w-24" />
+            </div>
+            <div className="flex gap-2">
+              <SkeletonBlock className="h-3.5 w-16" />
+              <SkeletonBlock className="h-3.5 w-20" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <SkeletonBlock className="h-3 w-full" />
+            <SkeletonBlock className="h-3 w-full" />
+            <SkeletonBlock className="h-3 w-4/5" />
+          </div>
+
+          <div className="flex gap-2 pt-1 sm:flex-row">
+            <SkeletonBlock className="h-10 w-40 rounded-md" />
+            <SkeletonBlock className="h-10 w-10 rounded-md" />
+          </div>
+        </div>
+      </section>
+
+      <div className="border-t border-border/60 pt-10 md:pt-12">
+        <SkeletonBlock className="h-6 w-48 mb-6" />
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col overflow-hidden rounded-lg border border-border/80 bg-card">
+              <SkeletonBlock className="aspect-[3/4] w-full" />
+              <div className="border-t border-border/60 px-2 py-2 sm:px-2.5">
+                <SkeletonBlock className="h-3.5 w-4/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
