@@ -3,20 +3,16 @@ import Image from "next/image";
 import { DearteenlineaLogo } from "@/components/dearteenlinea-logo";
 import { QullqaWordmark } from "@/components/qullqa-wordmark";
 import type { NosotrosPageContent } from "@/lib/nosotros-page";
-import { qullqaProducts } from "@/lib/qullqa-products";
-import {
-  SITE_INSTAGRAM_DEARTEENLINEA,
-  SITE_INSTAGRAM_QULLQA,
-  SITE_QULLQA_WEB,
-} from "@/lib/site-social";
 import { cn } from "@/lib/utils";
 
 function InstagramLine({
   label,
   href,
+  showInstagramName = true,
 }: {
   label: string;
   href: string;
+  showInstagramName?: boolean;
 }) {
   const hasUrl = href.trim().length > 0;
   return (
@@ -30,7 +26,7 @@ function InstagramLine({
           rel="noopener noreferrer"
           className="underline-offset-4 transition hover:text-foreground hover:underline"
         >
-          Instagram
+          {showInstagramName ? "Instagram" : href}
         </a>
       ) : (
         <span className="italic">Instagram (enlace próximo)</span>
@@ -75,11 +71,12 @@ export function NosotrosPage({ content }: { content: NosotrosPageContent }) {
             <div className="space-y-4">
               <div
                 className="text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem] [&_a]:underline-offset-4 [&_a:hover]:underline [&_b]:font-medium [&_b]:text-foreground [&_p]:mb-4 [&_p:last-child]:mb-0 [&_strong]:font-medium [&_strong]:text-foreground"
-                dangerouslySetInnerHTML={{ __html: content.contentHtml }}
+                dangerouslySetInnerHTML={{ __html: content.introDescriptionHtml }}
               />
               <InstagramLine
-                label="dearteenlinea"
-                href={SITE_INSTAGRAM_DEARTEENLINEA}
+                label={content.introInstagramText}
+                href={content.introInstagramUrl}
+                showInstagramName={false}
               />
             </div>
 
@@ -119,59 +116,36 @@ export function NosotrosPage({ content }: { content: NosotrosPageContent }) {
             </h2>
           </div>
 
-          <div className="space-y-6 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem]">
-            <p>
-              <strong className="font-medium text-foreground">
-                dearteenlinea
-              </strong>{" "}
-              trabaja junto a Qullqa para dar mayor visibilidad a artistas y
-              obras, conectando la curaduría de la galería con la tecnología que
-              impulsa a la comunidad artística.
-            </p>
-            <p>
-              <QullqaWordmark /> es una plataforma pensada para{" "}
-              <strong className="font-medium text-foreground">
-                coleccionistas
-              </strong>{" "}
-              y{" "}
-              <strong className="font-medium text-foreground">artistas</strong>
-              : centraliza la gestión de obras y colecciones y reduce fricciones
-              en el día a día. Quienes publican desde Qullqa pueden mostrar
-              parte de su trabajo al público en{" "}
-              <strong className="font-medium text-foreground">
-                qullqa gallery
-              </strong>
-              , el espacio abierto donde esta web también participa.
-            </p>
-            <p>
-              Qullqa ofrece dos líneas de producto:{" "}
-              <strong className="font-medium text-foreground">
-                Qullqa Collector
-              </strong>
-              , orientada a quienes coleccionan, y{" "}
-              <strong className="font-medium text-foreground">
-                Qullqa Studio
-              </strong>
-              , para quienes crean y gestionan su obra desde el estudio.
-            </p>
+          <div
+              className="space-y-6 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem] [&_a]:underline-offset-4 [&_a:hover]:underline [&_b]:font-medium [&_b]:text-foreground [&_p]:mb-4 [&_p:last-child]:mb-0 [&_strong]:font-medium [&_strong]:text-foreground"
+            >
+              <div dangerouslySetInnerHTML={{ __html: content.collaborationDescriptionHtml }}></div>
 
             <p className="pt-1">
               <a
-                href={SITE_QULLQA_WEB}
+                href={content.collaborationWebsiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-foreground underline-offset-4 transition hover:underline"
               >
-                Sitio web Qullqa
+                {content.collaborationWebsiteText}
               </a>
-              <span className="text-muted-foreground"> · </span>
-              <span className="text-muted-foreground">qullqa.art</span>
+              {content.collaborationWebsiteUrl.includes("qullqa") && (
+                <>
+                  <span className="text-muted-foreground"> · </span>
+                  <span className="text-muted-foreground">qullqa.art</span>
+                </>
+              )}
             </p>
 
-            <InstagramLine label="Qullqa" href={SITE_INSTAGRAM_QULLQA} />
+            <InstagramLine
+              label={content.collaborationInstagramText}
+              href={content.collaborationInstagramUrl}
+              showInstagramName={false}
+            />
 
             <ul className="grid gap-4 pt-4 sm:grid-cols-2">
-              {qullqaProducts.map((product) => (
+              {content.products.map((product) => (
                 <li key={product.href}>
                   <a
                     href={product.href}

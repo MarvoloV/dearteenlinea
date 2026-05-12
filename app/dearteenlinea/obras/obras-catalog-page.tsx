@@ -32,6 +32,7 @@ import {
 } from "@/lib/artwork-utils";
 import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
 import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
+import { getCuratedWorksTitle } from "@/lib/dearteenlinea-page-titles";
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
 export type ObrasSearchParams = Record<string, string | string[] | undefined>;
@@ -135,10 +136,10 @@ function firstMediumLabel(values: string[]): string | undefined {
   return undefined;
 }
 
-function obrasTitle() {
+function obrasTitle(title: string) {
   return (
     <h1 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
-      Obras curadas
+      {title}
     </h1>
   );
 }
@@ -381,7 +382,7 @@ export async function DearteenlineaObrasCatalogPage({
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
           <div className="space-y-6 md:space-y-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
-              <div className="min-w-0 shrink">{obrasTitle()}</div>
+              <div className="min-w-0 shrink">{obrasTitle(getCuratedWorksTitle(catalogPath))}</div>
               <DearteArtworkSearch
                 key={`dearte-obras-search-${searchKey}`}
                 searchValue={apiSearch}

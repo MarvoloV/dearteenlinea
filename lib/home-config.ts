@@ -2,12 +2,13 @@ import type {
   HomeConfigImage,
   HomeConfigItem,
   HomeConfigResponse,
+  HomeSectionVisibility,
 } from "@/lib/types/dearte";
 import { flowHeroImages } from "@/lib/flow-hero-assets";
 
 const DEFAULT_DEARTE_API_URL = "https://dearteenlinea.com";
 const HOME_CONFIG_PATH = "/wp-json/dearte/v1/home-config";
-const HOME_CONFIG_REVALIDATE_SECONDS = 200;
+const HOME_CONFIG_REVALIDATE_SECONDS = 5;
 
 const fallbackDearteImage =
   "https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&w=2000&q=85";
@@ -32,6 +33,7 @@ export type HomePathConfigs = {
 export type HomeConfig = {
   paths: HomePathConfigs;
   heroes: HomePathConfigs;
+  visibility?: HomeSectionVisibility;
 };
 
 const fallbackPathConfigs: HomePathConfigs = {
@@ -83,6 +85,7 @@ const fallbackHeroConfigs: HomePathConfigs = {
 const fallbackHomeConfig: HomeConfig = {
   paths: fallbackPathConfigs,
   heroes: fallbackHeroConfigs,
+  visibility: undefined,
 };
 
 function configuredDearteApiUrl(): string {
@@ -159,10 +162,20 @@ function normalizeResponse(value: unknown): HomeConfigResponse | null {
     .map(normalizeItem)
     .filter((item): item is HomeConfigItem => item !== null);
 
+  let visibility: HomeSectionVisibility | undefined;
+  if (isRecord(value.visibility)) {
+    visibility = {
+      mercado_secundario: value.visibility.mercado_secundario === true,
+      consolidados: value.visibility.consolidados === true,
+      emergentes: value.visibility.emergentes === true,
+    };
+  }
+
   return {
     success: value.success === true,
     count: numberValue(value.count),
     data,
+    visibility,
   };
 }
 
@@ -185,6 +198,7 @@ function mergePathConfig(
 
 export function homePathConfigsFromItems(
   items: HomeConfigItem[],
+  visibility?: HomeSectionVisibility,
 ): HomeConfig {
   const homeDearte = items.find((item) => item.key === "home_dearteenlinea");
   const homeQullqa = items.find((item) => item.key === "home_qullqa");
@@ -200,6 +214,7 @@ export function homePathConfigsFromItems(
       dearte: mergePathConfig(heroDearte, fallbackHeroConfigs.dearte),
       qullqa: mergePathConfig(heroQullqa, fallbackHeroConfigs.qullqa),
     },
+    visibility,
   };
 }
 
@@ -215,8 +230,16 @@ export async function getHomeConfig(): Promise<HomeConfig> {
     const payload = normalizeResponse(await response.json());
     if (!payload?.success) return fallbackHomeConfig;
 
-    return homePathConfigsFromItems(payload.data);
+    return homePathConfigsFromItems(payload.data, payload.visibility);
   } catch {
     return fallbackHomeConfig;
   }
+}
+
+export function isHomeSectionVisible(
+  visibility: HomeSectionVisibility | undefined,
+  key: keyof HomeSectionVisibility,
+): boolean {
+  if (!visibility) return true;
+  return visibility[key] !== false;
 }

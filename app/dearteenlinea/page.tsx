@@ -16,7 +16,7 @@ import {
   fetchDearteenlineaHomeMediums,
   fetchDearteenlineaLatestArtworks,
 } from "@/lib/dearteenlinea-api";
-import { getHomeConfig } from "@/lib/home-config";
+import { getHomeConfig, isHomeSectionVisible } from "@/lib/home-config";
 import { buildSeoMetadata } from "@/lib/seo";
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
@@ -137,6 +137,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DearteenlineaPage() {
   const homeConfig = await getHomeConfig();
   const hero = homeConfig.heroes.dearte;
+  const visibility = homeConfig.visibility;
+
+  const isMercadoSecundarioVisible = isHomeSectionVisible(visibility, "mercado_secundario");
+  const isConsolidadosVisible = isHomeSectionVisible(visibility, "consolidados");
+  const isEmergentesVisible = isHomeSectionVisible(visibility, "emergentes");
 
   return (
     <>
@@ -175,36 +180,42 @@ export default async function DearteenlineaPage() {
           >
             <ExploreByMediumSection />
           </Suspense>
-          <Suspense
-            fallback={
-              <ArtworkCarouselSkeleton
-                variant="teal"
-                title={categoryTitle("mercado_secundario")}
-              />
-            }
-          >
-            <HomeCategorySection category="mercado_secundario" variant="teal" />
-          </Suspense>
-          <Suspense
-            fallback={
-              <ArtworkCarouselSkeleton
-                variant="amber"
-                title={categoryTitle("consolidados")}
-              />
-            }
-          >
-            <HomeCategorySection category="consolidados" variant="amber" />
-          </Suspense>
-          <Suspense
-            fallback={
-              <ArtworkCarouselSkeleton
-                variant="sky"
-                title={categoryTitle("emergentes")}
-              />
-            }
-          >
-            <HomeCategorySection category="emergentes" variant="sky" />
-          </Suspense>
+          {isMercadoSecundarioVisible && (
+            <Suspense
+              fallback={
+                <ArtworkCarouselSkeleton
+                  variant="teal"
+                  title={categoryTitle("mercado_secundario")}
+                />
+              }
+            >
+              <HomeCategorySection category="mercado_secundario" variant="teal" />
+            </Suspense>
+          )}
+          {isConsolidadosVisible && (
+            <Suspense
+              fallback={
+                <ArtworkCarouselSkeleton
+                  variant="amber"
+                  title={categoryTitle("consolidados")}
+                />
+              }
+            >
+              <HomeCategorySection category="consolidados" variant="amber" />
+            </Suspense>
+          )}
+          {isEmergentesVisible && (
+            <Suspense
+              fallback={
+                <ArtworkCarouselSkeleton
+                  variant="sky"
+                  title={categoryTitle("emergentes")}
+                />
+              }
+            >
+              <HomeCategorySection category="emergentes" variant="sky" />
+            </Suspense>
+          )}
         </div>
       </main>
     </>

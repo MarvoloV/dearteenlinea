@@ -11,6 +11,11 @@ function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function stringArrayParam(value: string | string[] | undefined): string[] {
+  if (value == null) return [];
+  return Array.isArray(value) ? value.filter(Boolean) : [value];
+}
+
 function integerParam(
   value: string | string[] | undefined,
 ): number | undefined {
@@ -24,7 +29,7 @@ export default async function QullqaGalleryObrasPage({ searchParams }: PageProps
   const sp = await searchParams;
   const artworks = await fetchQullqaGalleryArtworks({
     q: firstParam(sp.q),
-    medium: firstParam(sp.medium),
+    medium: stringArrayParam(sp.medium),
     page: integerParam(sp.page),
     pageSize: integerParam(sp.pageSize),
   });

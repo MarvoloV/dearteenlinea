@@ -20,13 +20,13 @@ export type QullqaGalleryPagination = {
 
 export type QullqaGalleryAppliedFilters = {
   q: string | null;
-  medium: string | null;
+  mediums: string[];
   sort: "newest";
 };
 
 export type QullqaGalleryArtworksQuery = {
   q?: string | null;
-  medium?: string | null;
+  medium?: string[];
   page?: number;
   pageSize?: number;
   sort?: "newest";
@@ -357,9 +357,15 @@ function normalizeAppliedFilters(
   raw: Partial<QullqaGalleryAppliedFilters> | null | undefined,
   query: QullqaGalleryArtworksQuery,
 ): QullqaGalleryAppliedFilters {
+  const rawMediums = raw?.mediums;
+  const queryMediums = query.medium ?? [];
   return {
     q: raw?.q ?? query.q ?? null,
-    medium: raw?.medium ?? query.medium ?? null,
+    mediums: Array.isArray(rawMediums) 
+      ? rawMediums 
+      : queryMediums.length > 0 
+        ? queryMediums 
+        : [],
     sort: "newest",
   };
 }
@@ -376,10 +382,14 @@ function clampPage(page: number | undefined): number {
 
 function addArtworksQuery(url: URL, query: QullqaGalleryArtworksQuery): void {
   const q = query.q?.trim();
-  const medium = query.medium?.trim();
+  const mediums = query.medium;
 
   if (q) url.searchParams.set("q", q);
-  if (medium) url.searchParams.set("medium", medium);
+  if (mediums?.length) {
+    mediums.forEach((m) => {
+      if (m.trim()) url.searchParams.append("medium", m.trim());
+    });
+  }
   url.searchParams.set("page", String(clampPage(query.page)));
   url.searchParams.set("pageSize", String(clampPageSize(query.pageSize)));
   url.searchParams.set("sort", query.sort ?? "newest");

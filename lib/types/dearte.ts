@@ -43,8 +43,16 @@ export type HomeConfigItem = {
   button_link: string;
 };
 
+export type HomeSectionVisibility = {
+  mercado_secundario?: boolean;
+  consolidados?: boolean;
+  emergentes?: boolean;
+};
+
 export type HomeConfigResponse = {
   success: boolean;
+  secciones_visibles?: string[];
+  visibility?: HomeSectionVisibility;
   count: number;
   data: HomeConfigItem[];
 };
