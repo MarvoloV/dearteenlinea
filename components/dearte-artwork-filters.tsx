@@ -141,8 +141,8 @@ function FiltersBody({
         />
         <p className="mt-2 pb-0.5 text-[11px] leading-relaxed text-muted-foreground">
           Con el rango completo se incluyen también obras sin precio numérico.
-          Al acotar el rango solo se muestran obras con precio en USD dentro del
-          intervalo.
+          Al acotar el rango solo se muestran obras con precio o valor estimado
+          en USD que se cruce con el intervalo.
         </p>
       </fieldset>
     </div>

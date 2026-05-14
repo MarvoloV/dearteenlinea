@@ -72,5 +72,5 @@ export type PriceBucketId = (typeof priceBucketOptions)[number]["id"];
 
 /** Rango del slider de precio en catálogo (USD); mocks deben encajar en solapamiento. */
 export const priceSliderDomainMin = 0;
-export const priceSliderDomainMax = 25000;
+export const priceSliderDomainMax = 80000;
 export const priceSliderStep = 500;

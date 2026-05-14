@@ -76,6 +76,7 @@ export type DearteObraListado = {
   categorias: DearteCategoryRef[];
   dimensiones: string | null;
   precio: DeartePrice | null;
+  valor_estimado: string | null;
 };
 
 export type DearteObrasFilters = {
@@ -111,7 +112,8 @@ export type DearteObraDetalle = {
   tecnica: string | null;
   anio: number | null;
   dimensiones: string | null;
-  precio: string | null;
+  precio: DeartePrice | null;
+  valor_estimado: string | null;
   descripcion: string | null;
   otras_obras_artista: DearteObraRelacionada[];
 };
@@ -155,6 +157,8 @@ export type DearteObraArtistaDetalle = {
     link: string;
   } | null;
   dimensiones: string | null;
+  precio: DeartePrice | null;
+  valor_estimado: string | null;
 };
 
 export type DearteArtistaDetalle = {
@@ -184,6 +188,8 @@ export type DearteObraDisponible = {
   artista_url: string | null;
   medio: string | null;
   dimensiones: string | null;
+  precio: DeartePrice | null;
+  valor_estimado: string | null;
   stock: boolean;
 };
 
@@ -205,6 +211,8 @@ export type DearteCategoriaItem = {
     link: string;
   } | null;
   dimensiones: string | null;
+  precio: DeartePrice | null;
+  valor_estimado: string | null;
 };
 
 export type DearteCategoriaResponse = {

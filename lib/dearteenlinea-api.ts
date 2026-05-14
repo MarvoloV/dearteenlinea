@@ -24,6 +24,11 @@ import type {
   DearteObrasResponse,
   DearteTaxonomyTerm,
 } from "@/lib/types/dearte";
+import {
+  getArtworkPriceRange,
+  parseMoneyToNumber,
+  type PriceRange,
+} from "@/utils/price.utils";
 export type {
   DearteArtistaDetalle as ArtistaDetalleDearte,
   DearteArtistaListado as ArtistaDearte,
@@ -295,6 +300,8 @@ function normalizeObra(raw: UnknownRecord, index: number): ObraDisponible {
     artista_url: stringOrNull(raw.artista_url),
     medio: stringOrNull(raw.medio),
     dimensiones: stringOrNull(raw.dimensiones),
+    precio: normalizeDeartePrice(raw.precio),
+    valor_estimado: stringOrNull(raw.valor_estimado),
     stock: raw.stock === true,
   };
 }
@@ -343,6 +350,8 @@ function normalizeObraCategoria(
     artista: normalizeApiArtist(raw.artista),
     medio: normalizeApiMedium(raw.medio),
     dimensiones: stringOrNull(raw.dimensiones),
+    precio: normalizeDeartePrice(raw.precio),
+    valor_estimado: stringOrNull(raw.valor_estimado),
   };
 }
 
@@ -530,6 +539,16 @@ function normalizeObraListadoMedium(raw: unknown): DearteObraListado["medio"] {
 }
 
 function normalizeDeartePrice(raw: unknown): DearteObraListado["precio"] {
+  if (typeof raw === "string") {
+    return {
+      html: raw,
+      regular: null,
+      sale: null,
+      current: null,
+      currency: null,
+    };
+  }
+
   if (!isRecord(raw)) return null;
 
   return {
@@ -556,6 +575,7 @@ function normalizeObraListado(
     categorias: normalizeTaxonomyTermArray(raw.categorias) ?? [],
     dimensiones: stringOrNull(raw.dimensiones),
     precio: normalizeDeartePrice(raw.precio),
+    valor_estimado: stringOrNull(raw.valor_estimado),
   };
 }
 
@@ -578,6 +598,20 @@ function cleanStringList(values: string[] | undefined): string[] {
 
 function cleanCategoryStringList(values: string[] | undefined): string[] {
   return cleanStringList(values).map(dearteCategoryApiSlugFromFilterValue);
+}
+
+function safePageParam(value: number | undefined): number {
+  return Number.isFinite(value) ? Math.max(1, Math.trunc(value!)) : 1;
+}
+
+function safePerPageParam(value: number | undefined, fallback = 9): number {
+  return Number.isFinite(value) ? Math.max(1, Math.trunc(value!)) : fallback;
+}
+
+function safePriceParam(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.trunc(value))
+    : null;
 }
 
 function normalizeObrasResponsePayload(
@@ -636,7 +670,8 @@ function normalizeObraDetallePayload(payload: unknown): DearteObraDetalle | null
     tecnica: stringOrNull(payload.tecnica),
     anio: typeof payload.anio === "number" ? payload.anio : null,
     dimensiones: stringOrNull(payload.dimensiones),
-    precio: stringOrNull(payload.precio),
+    precio: normalizeDeartePrice(payload.precio),
+    valor_estimado: stringOrNull(payload.valor_estimado),
     descripcion: stringOrNull(payload.descripcion),
     otras_obras_artista: Array.isArray(payload.otras_obras_artista)
       ? payload.otras_obras_artista
@@ -665,6 +700,8 @@ function normalizeObraArtista(raw: UnknownRecord, index: number): ObraArtista {
     imagen: stringOrNull(raw.imagen),
     medio: normalizeArtistDetailMedium(raw.medio),
     dimensiones: stringOrNull(raw.dimensiones),
+    precio: normalizeDeartePrice(raw.precio),
+    valor_estimado: stringOrNull(raw.valor_estimado),
   };
 }
 
@@ -695,6 +732,7 @@ function artworkFromObra(obra: ObraDisponible, index: number): Artwork {
   const medium = normalizeText(obra.medio) ?? "";
   const imageUrl =
     firstNonEmpty(obra.imagen, obra.imagen_full) ?? fallbackImageFor(index);
+  const priceRange = priceRangeValues(getArtworkPriceRange(obra));
 
   return {
     slug: getSlugFromUrl(firstNonEmpty(obra.url)) ?? `dearte-${obra.id}`,
@@ -704,6 +742,9 @@ function artworkFromObra(obra: ObraDisponible, index: number): Artwork {
     medium,
     technique: medium,
     dimensions: normalizeText(obra.dimensiones),
+    priceLabel: displayDeartePriceLabel(obra.precio, obra.valor_estimado),
+    priceMin: priceRange.min,
+    priceMax: priceRange.max,
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
     stock: obra.stock,
@@ -759,11 +800,11 @@ function numericDeartePrice(value: string | null | undefined): number | null {
   const raw = firstNonEmpty(value);
   if (!raw) return null;
 
-  const digits = raw.replace(/\D/g, "");
-  if (!digits) return null;
+  return parseMoneyToNumber(raw);
+}
 
-  const amount = Number(digits);
-  return Number.isFinite(amount) ? amount : null;
+function formatMoneyAmount(amount: number): string {
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function formatDearteCurrentPrice(
@@ -773,8 +814,35 @@ function formatDearteCurrentPrice(
   if (amount === null) return null;
 
   const currency = normalizeText(price?.currency) ?? "USD";
-  const formatted = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return { label: `${currency} ${formatted}`, amount };
+  return { label: `${currency} ${formatMoneyAmount(amount)}`, amount };
+}
+
+function cleanDeartePriceLabel(value: string | null | undefined): string | null {
+  const clean = normalizeText(stripHtml(value ?? ""));
+  if (!clean) return null;
+  return clean;
+}
+
+function displayDeartePriceLabel(
+  price: DearteObraListado["precio"],
+  estimatedValue: string | null,
+): string | null {
+  return (
+    cleanDeartePriceLabel(price?.html) ??
+    formatDearteCurrentPrice(price)?.label ??
+    normalizeText(estimatedValue)
+  );
+}
+
+function priceRangeValues(range: PriceRange | null): {
+  min: number | null;
+  max: number | null;
+} {
+  if (!range) return { min: null, max: null };
+  return {
+    min: Math.min(range.min, range.max),
+    max: Math.max(range.min, range.max),
+  };
 }
 
 function artworkFromObraListado(
@@ -784,7 +852,7 @@ function artworkFromObraListado(
   const title = normalizeText(obra.titulo) ?? "Obra sin título";
   const medium = normalizeText(obra.medio?.nombre) ?? "";
   const imageUrl = firstNonEmpty(obra.imagen) ?? fallbackImageFor(index);
-  const currentPrice = formatDearteCurrentPrice(obra.precio);
+  const priceRange = priceRangeValues(getArtworkPriceRange(obra));
 
   return {
     slug: firstNonEmpty(obra.slug) ?? `dearte-obra-${obra.id}`,
@@ -801,9 +869,9 @@ function artworkFromObraListado(
     categories: categoryTermsForArtwork(obra.categorias),
     technique: medium,
     dimensions: normalizeText(obra.dimensiones),
-    priceLabel: currentPrice?.label,
-    priceMin: currentPrice?.amount,
-    priceMax: currentPrice?.amount,
+    priceLabel: displayDeartePriceLabel(obra.precio, obra.valor_estimado),
+    priceMin: priceRange.min,
+    priceMax: priceRange.max,
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
   };
@@ -825,6 +893,7 @@ function artworkFromCategoriaObra(
   const title = normalizeText(obra.titulo) ?? "Obra sin título";
   const medium = normalizeText(obra.medio?.nombre) ?? "";
   const imageUrl = firstNonEmpty(obra.imagen) ?? fallbackImageFor(index);
+  const priceRange = priceRangeValues(getArtworkPriceRange(obra));
 
   return {
     slug: firstNonEmpty(obra.slug) ?? `dearte-categoria-${obra.id}`,
@@ -847,6 +916,9 @@ function artworkFromCategoriaObra(
     ],
     technique: medium,
     dimensions: normalizeText(obra.dimensiones),
+    priceLabel: displayDeartePriceLabel(obra.precio, obra.valor_estimado),
+    priceMin: priceRange.min,
+    priceMax: priceRange.max,
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
   };
@@ -1013,6 +1085,7 @@ function artworkFromObraDetalle(raw: DearteObraDetalle): Artwork {
   const gallery = galleryImageUrls(raw.galeria);
   const imageUrls = Array.from(new Set([mainImage, ...gallery].filter(Boolean))) as string[];
   const fallbackImage = imageUrls.length > 0 ? null : fallbackImageFor(0);
+  const priceRange = priceRangeValues(getArtworkPriceRange(raw));
 
   return {
     slug: firstNonEmpty(raw.slug) ?? `dearte-obra-${raw.id}`,
@@ -1032,7 +1105,9 @@ function artworkFromObraDetalle(raw: DearteObraDetalle): Artwork {
     dimensions: normalizeText(raw.dimensiones),
     year: raw.anio,
     technique: normalizeText(raw.tecnica) ?? medium,
-    priceLabel: normalizeText(raw.precio),
+    priceLabel: displayDeartePriceLabel(raw.precio, raw.valor_estimado),
+    priceMin: priceRange.min,
+    priceMax: priceRange.max,
     imageUrls:
       imageUrls.length > 0
         ? imageUrls
@@ -1056,6 +1131,7 @@ function artworkFromArtistDetail(
 
   const medium = normalizeText(obra.medio?.nombre) ?? "";
   const imageUrl = firstNonEmpty(obra.imagen) ?? fallbackImageFor(index);
+  const priceRange = priceRangeValues(getArtworkPriceRange(obra));
 
   return {
     slug,
@@ -1066,6 +1142,9 @@ function artworkFromArtistDetail(
     mediumUrl: firstNonEmpty(obra.medio?.link),
     technique: medium,
     dimensions: normalizeText(obra.dimensiones),
+    priceLabel: displayDeartePriceLabel(obra.precio, obra.valor_estimado),
+    priceMin: priceRange.min,
+    priceMax: priceRange.max,
     imageUrls: imageUrl ? [imageUrl] : [],
     videoUrls: [],
   };
@@ -1204,10 +1283,8 @@ export async function getFiltrosObras(): Promise<
 export async function getObras(
   params: DearteenlineaObrasParams = {},
 ): Promise<DearteenlineaApiResult<DearteObrasResponse>> {
-  const safePage = Number.isFinite(params.page) ? Math.max(1, Math.trunc(params.page!)) : 1;
-  const safePerPage = Number.isFinite(params.perPage)
-    ? Math.max(1, Math.trunc(params.perPage!))
-    : 9;
+  const safePage = safePageParam(params.page);
+  const safePerPage = safePerPageParam(params.perPage);
   const query = new URLSearchParams();
   query.set("page", String(safePage));
   query.set("per_page", String(safePerPage));
@@ -1215,16 +1292,10 @@ export async function getObras(
   const categorias = cleanCategoryStringList(params.categorias);
   const medios = cleanStringList(params.medios);
   const search = firstNonEmpty(params.search);
-  const precioMin =
-    typeof params.precioMin === "number" && Number.isFinite(params.precioMin)
-      ? Math.max(0, Math.trunc(params.precioMin))
-      : null;
-  const precioMax =
-    typeof params.precioMax === "number" && Number.isFinite(params.precioMax)
-      ? Math.max(0, Math.trunc(params.precioMax))
-      : null;
+  const precioMin = safePriceParam(params.precioMin);
+  const precioMax = safePriceParam(params.precioMax);
 
-  if (categorias.length > 0) query.set("categoria", categorias.join(","));
+  if (categorias.length > 0) query.set("categorias", categorias.join(","));
   if (medios.length > 0) query.set("medios", medios.join(","));
   if (search) query.set("search", search);
   if (precioMin !== null) query.set("precio_min", String(precioMin));
@@ -1497,14 +1568,8 @@ function obrasListViewFromDearte(
 ): DearteenlineaObrasListView {
   const requestedCategories = cleanCategoryStringList(params.categorias);
   const requestedMediums = cleanStringList(params.medios);
-  const requestedPrecioMin =
-    typeof params.precioMin === "number" && Number.isFinite(params.precioMin)
-      ? Math.trunc(params.precioMin)
-      : null;
-  const requestedPrecioMax =
-    typeof params.precioMax === "number" && Number.isFinite(params.precioMax)
-      ? Math.trunc(params.precioMax)
-      : null;
+  const requestedPrecioMin = safePriceParam(params.precioMin);
+  const requestedPrecioMax = safePriceParam(params.precioMax);
 
   return {
     artworks: obras.data.map((obra, index) => artworkFromObraListado(obra, index)),

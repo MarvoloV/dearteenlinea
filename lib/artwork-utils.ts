@@ -6,6 +6,7 @@ import {
   priceSliderDomainMax,
   priceSliderDomainMin,
 } from "@/lib/artwork-taxonomy";
+import { doRangesOverlap } from "@/utils/price.utils";
 
 export function artistBySlug(
   artists: Artist[],
@@ -103,7 +104,7 @@ export function matchesPriceRangeFilter(
 
   const lo = min ?? max!;
   const hi = max ?? min!;
-  return lo <= filterMax && hi >= filterMin;
+  return doRangesOverlap({ min: lo, max: hi }, { min: filterMin, max: filterMax });
 }
 
 function normalizeMediumKey(medium: string): string {
