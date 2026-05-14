@@ -23,6 +23,12 @@ export type DearteFiltrosObrasResponse = {
   medios: DearteMediumRef[];
 };
 
+export type ObrasPrecioMaximoResponse = {
+  max_price: number;
+  max_price_plus_2000: number;
+  currency: string;
+};
+
 export type HomeConfigImage = {
   id: number;
   url: string;

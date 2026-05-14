@@ -23,6 +23,7 @@ import type {
   DearteObraRelacionada,
   DearteObrasResponse,
   DearteTaxonomyTerm,
+  ObrasPrecioMaximoResponse,
 } from "@/lib/types/dearte";
 import {
   getArtworkPriceRange,
@@ -46,6 +47,7 @@ export type {
   DearteObraRelacionada,
   DearteObrasResponse,
   DearteTaxonomyTerm,
+  ObrasPrecioMaximoResponse,
 } from "@/lib/types/dearte";
 
 type ArtistaDearte = DearteArtistaListado;
@@ -62,6 +64,7 @@ type ObraArtista = DearteObraArtistaDetalle;
 
 const FILTROS_OBRAS_PATH = "/wp-json/dearte/v1/filtros-obras";
 const OBRAS_PATH = "/wp-json/dearte/v1/obras";
+const OBRAS_PRECIO_MAXIMO_PATH = "/wp-json/dearte/v1/obras-precio-maximo";
 const OBRAS_DISPONIBLES_PATH = "/wp-json/dearte/v1/obras-disponibles";
 const MEDIOS_PATH = "/wp-json/dearte/v1/medios";
 const CATEGORIA_PATH = "/wp-json/dearte/v1/categoria";
@@ -514,6 +517,31 @@ function normalizeFiltrosObrasPayload(
   return {
     categorias,
     medios,
+  };
+}
+
+function normalizeObrasPrecioMaximoPayload(
+  payload: unknown,
+): ObrasPrecioMaximoResponse | null {
+  if (!isRecord(payload)) return null;
+
+  const maxPrice =
+    typeof payload.max_price === "number" && Number.isFinite(payload.max_price)
+      ? Math.max(0, Math.trunc(payload.max_price))
+      : null;
+  const maxPricePlus2000 =
+    typeof payload.max_price_plus_2000 === "number" &&
+    Number.isFinite(payload.max_price_plus_2000)
+      ? Math.max(0, Math.trunc(payload.max_price_plus_2000))
+      : null;
+  const currency = stringOrNull(payload.currency) ?? "USD";
+
+  if (maxPrice === null || maxPricePlus2000 === null) return null;
+
+  return {
+    max_price: maxPrice,
+    max_price_plus_2000: Math.max(maxPrice, maxPricePlus2000),
+    currency,
   };
 }
 
@@ -1278,6 +1306,22 @@ export async function getFiltrosObras(): Promise<
   }
 
   return { ok: true, data: filters };
+}
+
+export async function getObrasPrecioMaximo(): Promise<
+  DearteenlineaApiResult<ObrasPrecioMaximoResponse>
+> {
+  const result = await fetchDearteJson(OBRAS_PRECIO_MAXIMO_PATH, {
+    revalidate: LIST_REVALIDATE_SECONDS,
+  });
+  if (!result.ok) return result;
+
+  const maxPrice = normalizeObrasPrecioMaximoPayload(result.data);
+  if (!maxPrice) {
+    return errorResult("La respuesta de precio máximo de obras no es válida.");
+  }
+
+  return { ok: true, data: maxPrice };
 }
 
 export async function getObras(

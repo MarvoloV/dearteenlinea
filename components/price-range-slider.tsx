@@ -18,6 +18,9 @@ type PriceRangeSliderProps = {
   valueMin: number;
   valueMax: number;
   onChange: (min: number, max: number) => void;
+  domainMin?: number;
+  domainMax?: number;
+  step?: number;
   className?: string;
   labelClassName?: string;
 };
@@ -43,13 +46,12 @@ export function PriceRangeSlider({
   valueMin,
   valueMax,
   onChange,
+  domainMin = priceSliderDomainMin,
+  domainMax = priceSliderDomainMax,
+  step = priceSliderStep,
   className,
   labelClassName,
 }: PriceRangeSliderProps) {
-  const domainMin = priceSliderDomainMin;
-  const domainMax = priceSliderDomainMax;
-  const step = priceSliderStep;
-
   const pct = (v: number) =>
     ((v - domainMin) / (domainMax - domainMin)) * 100;
 

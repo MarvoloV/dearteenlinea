@@ -92,9 +92,10 @@ export function matchesPriceRangeFilter(
   artwork: Artwork,
   filterMin: number,
   filterMax: number,
+  domainMin = priceSliderDomainMin,
+  domainMax = priceSliderDomainMax,
 ): boolean {
-  const full =
-    filterMin <= priceSliderDomainMin && filterMax >= priceSliderDomainMax;
+  const full = filterMin <= domainMin && filterMax >= domainMax;
   if (full) return true;
 
   const min = artwork.priceMin;

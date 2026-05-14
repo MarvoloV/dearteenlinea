@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { PriceRangeSlider } from "@/components/price-range-slider";
@@ -12,6 +12,7 @@ import {
 import type { DearteenlineaFilterOption } from "@/lib/dearteenlinea-api";
 import { buildDearteObrasHref } from "@/lib/dearte-obras-url";
 import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 type DearteArtworkFiltersProps = {
   categories: DearteenlineaFilterOption[];
@@ -20,6 +21,8 @@ type DearteArtworkFiltersProps = {
   selectedMediums: string[];
   selectedPriceMin: number;
   selectedPriceMax: number;
+  priceDomainMin?: number;
+  priceDomainMax?: number;
   search: string;
   catalogPath: string;
   clearPath: string;
@@ -67,6 +70,8 @@ function FiltersBody({
   selectedMediums,
   selectedPriceMin,
   selectedPriceMax,
+  priceDomainMin,
+  priceDomainMax,
   onToggleCategory,
   onToggleMedium,
   onPriceRangeChange,
@@ -80,6 +85,8 @@ function FiltersBody({
   selectedMediums: Set<string>;
   selectedPriceMin: number;
   selectedPriceMax: number;
+  priceDomainMin: number;
+  priceDomainMax: number;
   onToggleCategory: (slug: string) => void;
   onToggleMedium: (slug: string) => void;
   onPriceRangeChange: (min: number, max: number) => void;
@@ -137,6 +144,8 @@ function FiltersBody({
           idSuffix={idSuffix}
           valueMin={selectedPriceMin}
           valueMax={selectedPriceMax}
+          domainMin={priceDomainMin}
+          domainMax={priceDomainMax}
           onChange={onPriceRangeChange}
         />
         <p className="mt-2 pb-0.5 text-[11px] leading-relaxed text-muted-foreground">
@@ -156,6 +165,8 @@ export function DearteArtworkFilters({
   selectedMediums,
   selectedPriceMin,
   selectedPriceMax,
+  priceDomainMin = priceSliderDomainMin,
+  priceDomainMax = priceSliderDomainMax,
   search,
   catalogPath,
   clearPath,
@@ -175,6 +186,10 @@ export function DearteArtworkFilters({
   );
   const [localPriceMin, setLocalPriceMin] = useState(selectedPriceMin);
   const [localPriceMax, setLocalPriceMax] = useState(selectedPriceMax);
+  const debouncedPriceKey = useDebouncedValue(
+    `${localPriceMin}|${localPriceMax}`,
+    450,
+  );
 
   function categoriasForQuery(next?: Set<string>): string[] {
     return hideCategoryFilters ? [] : [...(next ?? localCategories)];
@@ -187,13 +202,13 @@ export function DearteArtworkFilters({
   function precioMinForQuery(nextMin?: number, nextMax?: number): number | null {
     const min = nextMin ?? localPriceMin;
     const max = nextMax ?? localPriceMax;
-    return min > priceSliderDomainMin || max < priceSliderDomainMax ? min : null;
+    return min > priceDomainMin || max < priceDomainMax ? min : null;
   }
 
   function precioMaxForQuery(nextMin?: number, nextMax?: number): number | null {
     const min = nextMin ?? localPriceMin;
     const max = nextMax ?? localPriceMax;
-    return min > priceSliderDomainMin || max < priceSliderDomainMax ? max : null;
+    return min > priceDomainMin || max < priceDomainMax ? max : null;
   }
 
   function navigate(next: {
@@ -237,14 +252,59 @@ export function DearteArtworkFilters({
   function changePriceRange(min: number, max: number) {
     setLocalPriceMin(min);
     setLocalPriceMax(max);
-    navigate({ precioMin: min, precioMax: max });
   }
+
+  useEffect(() => {
+    const [debouncedMinRaw, debouncedMaxRaw] = debouncedPriceKey.split("|");
+    const debouncedMin = Number(debouncedMinRaw);
+    const debouncedMax = Number(debouncedMaxRaw);
+
+    if (!Number.isFinite(debouncedMin) || !Number.isFinite(debouncedMax)) return;
+    if (debouncedMin === selectedPriceMin && debouncedMax === selectedPriceMax) {
+      return;
+    }
+
+    startTransition(() => {
+      router.replace(
+        buildDearteObrasHref({
+          catalogPath,
+          search,
+          categorias: hideCategoryFilters ? [] : [...localCategories],
+          medios: hideMediumFilters ? [] : [...localMediums],
+          precioMin:
+            debouncedMin > priceDomainMin || debouncedMax < priceDomainMax
+              ? debouncedMin
+              : null,
+          precioMax:
+            debouncedMin > priceDomainMin || debouncedMax < priceDomainMax
+              ? debouncedMax
+              : null,
+          page: 1,
+        }),
+        { scroll: false },
+      );
+    });
+  }, [
+    catalogPath,
+    debouncedPriceKey,
+    hideCategoryFilters,
+    hideMediumFilters,
+    localCategories,
+    localMediums,
+    priceDomainMax,
+    priceDomainMin,
+    router,
+    search,
+    selectedPriceMax,
+    selectedPriceMin,
+    startTransition,
+  ]);
 
   function clearFilters() {
     setLocalCategories(new Set());
     setLocalMediums(new Set());
-    setLocalPriceMin(priceSliderDomainMin);
-    setLocalPriceMax(priceSliderDomainMax);
+    setLocalPriceMin(priceDomainMin);
+    setLocalPriceMax(priceDomainMax);
     startTransition(() => {
       router.replace(clearPath, { scroll: false });
     });
@@ -254,8 +314,8 @@ export function DearteArtworkFilters({
     search.trim().length > 0 ||
     localCategories.size > 0 ||
     localMediums.size > 0 ||
-    localPriceMin > priceSliderDomainMin ||
-    localPriceMax < priceSliderDomainMax;
+    localPriceMin > priceDomainMin ||
+    localPriceMax < priceDomainMax;
 
   const filtersIntro = (
     <>
@@ -278,6 +338,8 @@ export function DearteArtworkFilters({
     selectedMediums: localMediums,
     selectedPriceMin: localPriceMin,
     selectedPriceMax: localPriceMax,
+    priceDomainMin,
+    priceDomainMax,
     onToggleCategory: toggleCategory,
     onToggleMedium: toggleMedium,
     onPriceRangeChange: changePriceRange,
