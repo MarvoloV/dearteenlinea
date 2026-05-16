@@ -290,7 +290,6 @@ export function QullqaArtworkCatalog({
                       checked={selectedMediums.has(medium.slug)}
                       onCheckedChange={() => handleToggleMedium(medium.slug)}
                       label={medium.label}
-                      count={medium.artworkCount}
                     />
                   ))}
                 </div>
