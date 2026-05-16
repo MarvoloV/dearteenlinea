@@ -100,10 +100,7 @@ function FilterCheckbox({
   return (
     <label
       htmlFor={id}
-      className={cn(
-        "flex cursor-pointer items-start gap-2 rounded-md py-1 text-sm leading-snug hover:bg-muted/50",
-        checked ? "text-foreground" : "text-muted-foreground",
-      )}
+      className="flex cursor-pointer items-start gap-2 rounded-md py-1 text-sm leading-snug text-foreground hover:bg-muted/50 [font-family:var(--font-roboto)]"
     >
       <input
         id={id}
@@ -112,7 +109,7 @@ function FilterCheckbox({
         onChange={onCheckedChange}
         className="mt-0.5 size-4 shrink-0 rounded border border-border accent-foreground"
       />
-      <span className="min-w-0 truncate flex-1">{label}</span>
+      <span className="min-w-0 flex-1">{label}</span>
       {count !== undefined && (
         <span
           className={cn(
@@ -166,14 +163,18 @@ export function QullqaArtworkCatalog({
   }, [searchDraft, appliedFilters.q, basePath, selectedMediums, router]);
 
   useEffect(() => {
-    const urlMediums = new Set(appliedFilters.mediums ?? []);
-    const sameMediums =
-      urlMediums.size === selectedMediums.size &&
-      [...urlMediums].every((m) => selectedMediums.has(m));
-    if (!sameMediums) {
-      setSelectedMediums(urlMediums);
-    }
-  }, [appliedFilters.mediums]);
+    const urlMediumValues = appliedFilters.mediums ?? [];
+    startTransition(() => {
+      setSelectedMediums((current) => {
+        const urlMediums = new Set(urlMediumValues);
+        const sameMediums =
+          urlMediums.size === current.size &&
+          [...urlMediums].every((m) => current.has(m));
+
+        return sameMediums ? current : urlMediums;
+      });
+    });
+  }, [appliedFilters.mediums, startTransition]);
 
   const hasActiveFilters = Boolean(
     searchDraft.trim() || selectedMediums.size > 0,
@@ -182,6 +183,20 @@ export function QullqaArtworkCatalog({
     mediumLabelForSlug(mediums, slug),
   );
   const pageNumbers = visiblePages(pagination.page, pagination.totalPages);
+
+  const filtersIntro = (
+    <>
+      Sin marcar ninguna casilla en medio se muestran todas las opciones de ese
+      criterio.
+    </>
+  );
+
+  const clearFiltersButtonClass = cn(
+    "shrink-0 rounded-md border px-2 py-1 text-xs font-medium transition",
+    hasActiveFilters
+      ? "border-border/80 bg-background text-foreground shadow-xs hover:bg-muted"
+      : "cursor-not-allowed border-transparent bg-muted/30 text-muted-foreground/50",
+  );
 
   const linkBase = {
     basePath,
@@ -242,51 +257,32 @@ export function QullqaArtworkCatalog({
       </div>
 
       <div className="lg:flex lg:items-start lg:gap-8">
-        <aside className="mb-6 w-full max-w-full shrink-0 lg:sticky lg:top-24 lg:mb-8 lg:w-64">
-          <div className="rounded-lg border border-border/80 bg-card/40 shadow-sm">
-            <div className="border-b border-border/60 bg-background/95 px-4 pb-3 pt-4 backdrop-blur-sm">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">Medios</p>
-                {hasActiveFilters ? (
-                  <button
-                    type="button"
-                    onClick={handleClearFilters}
-                    className="rounded-md border border-border/80 bg-background px-2 py-1 text-xs font-medium text-foreground shadow-xs transition hover:bg-muted"
-                  >
-                    Limpiar
-                  </button>
-                ) : null}
+        <aside className="mb-6 min-h-0 w-full max-w-full shrink-0 lg:sticky lg:top-24 lg:mb-8 lg:flex lg:max-h-[calc(100svh-6rem-2rem-env(safe-area-inset-bottom,0px))] lg:w-64 lg:flex-col lg:self-start">
+          <div className="flex max-h-[min(68dvh,calc(100dvh-10rem-env(safe-area-inset-bottom,0px)))] min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg border border-border/80 bg-card/40 shadow-sm lg:max-h-none">
+            <div className="shrink-0 border-b border-border/60 bg-background/95 px-4 pb-3 pt-4 backdrop-blur-sm">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">Filtros</p>
+                <button
+                  type="button"
+                  disabled={!hasActiveFilters}
+                  aria-label="Limpiar filtros"
+                  onClick={handleClearFilters}
+                  className={clearFiltersButtonClass}
+                >
+                  Limpiar
+                </button>
               </div>
-              {selectedMediumLabels.length > 0 ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Filtrando por {selectedMediumLabels.join(", ")}.
-                </p>
-              ) : null}
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {filtersIntro} El listado de abajo se desplaza de forma
+                independiente.
+              </p>
             </div>
-            <div className="max-h-[min(60dvh,28rem)] overflow-y-auto px-3 py-3 [scrollbar-gutter:stable]">
+            <div className="min-h-0 flex-1 scroll-pb-6 overflow-y-auto overscroll-y-auto px-4 pt-4 [scrollbar-gutter:stable] pb-[calc(3rem+env(safe-area-inset-bottom,0px))]">
               <fieldset className="space-y-1.5">
                 <legend className="mb-1 block text-xs font-medium text-muted-foreground">
                   Medio
                 </legend>
                 <div className="flex flex-col gap-0.5">
-                  <FilterCheckbox
-                    id="qullqa-filter-medium-all"
-                    checked={selectedMediums.size === 0}
-                    onCheckedChange={() => {
-                      setSelectedMediums(new Set());
-                      startTransition(() => {
-                        router.replace(
-                          buildObrasHref({
-                            ...linkBase,
-                            q: searchDraft.trim() || null,
-                            page: 1,
-                          }),
-                          { scroll: false },
-                        );
-                      });
-                    }}
-                    label="Todos"
-                  />
                   {mediums.map((medium, index) => (
                     <FilterCheckbox
                       key={medium.slug}
@@ -303,7 +299,12 @@ export function QullqaArtworkCatalog({
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 space-y-4">
+        <div
+          className={cn(
+            "min-w-0 flex-1 space-y-4",
+            isPending && "opacity-70 transition-opacity",
+          )}
+        >
           <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>{resultSummary(pagination)}</p>
             {hasActiveFilters ? (
