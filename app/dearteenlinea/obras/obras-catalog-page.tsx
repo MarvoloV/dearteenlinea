@@ -36,6 +36,7 @@ import { mockArtistsDearteenlinea } from "@/lib/mock-artists";
 import { mockArtworksDearteenlinea } from "@/lib/mock-artworks-dearteenlinea";
 import { getCuratedWorksTitle } from "@/lib/dearteenlinea-page-titles";
 import { buildDearteObrasHref } from "@/lib/dearte-obras-url";
+import { filterVisibleCategories } from "@/lib/filter-visibility";
 import type { ArtworkDearteCategory } from "@/lib/types/artwork";
 
 export type ObrasSearchParams = Record<string, string | string[] | undefined>;
@@ -328,11 +329,12 @@ async function DearteArtworkFiltersSection({
 }) {
   const filtersResult = await fetchDearteenlineaObrasFilters();
   const filters = filtersResult.ok ? filtersResult.data : localFilterOptions();
+  const visibleCategories = filterVisibleCategories(filters.categories);
 
   return (
     <DearteArtworkFilters
       key={`dearte-filters-${catalogSearchKey(query)}`}
-      categories={filters.categories}
+      categories={visibleCategories}
       mediums={filters.mediums}
       selectedCategories={hideCategoryFilters ? [] : query.apiCategories}
       selectedMediums={hideMediumFilters ? [] : query.apiMediums}

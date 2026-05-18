@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import fs from "node:fs";
-import path from "node:path";
 import Link from "next/link";
 
-import { LegalDocumentBody } from "@/components/legal-document-body";
 import { ReclamacionesForm } from "@/components/reclamaciones-form";
+import { getLibroReclamacionesConfig } from "@/lib/libro-reclamaciones-config";
 import { buildSeoMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildSeoMetadata({
@@ -14,16 +12,8 @@ export const metadata: Metadata = buildSeoMetadata({
   path: "/legal/reclamaciones",
 });
 
-const MARKER = "\nLos campos marcados con * son obligatorios";
-
-export default function ReclamacionesPage() {
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "assets-cursor/dearteenlinea/reclamaciones.md"),
-    "utf-8",
-  );
-
-  const cut = raw.indexOf(MARKER);
-  const introRaw = cut >= 0 ? raw.slice(0, cut).trimEnd() : raw;
+export default async function ReclamacionesPage() {
+  const { informacionGeneralHtml } = await getLibroReclamacionesConfig();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -38,7 +28,13 @@ export default function ReclamacionesPage() {
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
           <article className="text-foreground">
-            <LegalDocumentBody raw={introRaw} />
+            <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
+              Libro de Reclamaciones
+            </h1>
+            <div
+              className="[&_br]:hidden [&_p]:mb-4 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground"
+              dangerouslySetInnerHTML={{ __html: informacionGeneralHtml }}
+            />
           </article>
           <div className="mt-10 border-t border-border/60 pt-10">
             <h2 className="sr-only">Formulario de reclamación</h2>

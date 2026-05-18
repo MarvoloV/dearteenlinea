@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ContactoPage } from "@/components/contacto-page";
 import { FlowHeader } from "@/components/flow-header";
+import { getContactoPage } from "@/lib/contacto-page";
 import { buildSeoMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildSeoMetadata({
@@ -12,12 +13,14 @@ export const metadata: Metadata = buildSeoMetadata({
   siteName: "Qullqa Gallery",
 });
 
-export default function QullqaContactoPage() {
+export default async function QullqaContactoPage() {
+  const content = await getContactoPage();
+
   return (
     <>
       <FlowHeader variant="qullqa-gallery" />
       <main className="flex-1">
-        <ContactoPage />
+        <ContactoPage contentHtml={content?.contentHtml} />
       </main>
     </>
   );

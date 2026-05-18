@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { PriceRangeSlider } from "@/components/price-range-slider";
+import { ENABLE_PRICE_FILTER } from "@/constants/filters.constants";
 import {
   priceSliderDomainMax,
   priceSliderDomainMin,
@@ -138,22 +139,24 @@ function FiltersBody({
         </fieldset>
       ) : null}
 
-      <fieldset className={groupClass}>
-        <legend className={legendClass}>Precio (USD)</legend>
-        <PriceRangeSlider
-          idSuffix={idSuffix}
-          valueMin={selectedPriceMin}
-          valueMax={selectedPriceMax}
-          domainMin={priceDomainMin}
-          domainMax={priceDomainMax}
-          onChange={onPriceRangeChange}
-        />
-        <p className="mt-2 pb-0.5 text-[11px] leading-relaxed text-muted-foreground">
-          Con el rango completo se incluyen también obras sin precio numérico.
-          Al acotar el rango solo se muestran obras con precio o valor estimado
-          en USD que se cruce con el intervalo.
-        </p>
-      </fieldset>
+      {ENABLE_PRICE_FILTER ? (
+        <fieldset className={groupClass}>
+          <legend className={legendClass}>Precio (USD)</legend>
+          <PriceRangeSlider
+            idSuffix={idSuffix}
+            valueMin={selectedPriceMin}
+            valueMax={selectedPriceMax}
+            domainMin={priceDomainMin}
+            domainMax={priceDomainMax}
+            onChange={onPriceRangeChange}
+          />
+          <p className="mt-2 pb-0.5 text-[11px] leading-relaxed text-muted-foreground">
+            Con el rango completo se incluyen también obras sin precio numérico.
+            Al acotar el rango solo se muestran obras con precio o valor estimado
+            en USD que se cruce con el intervalo.
+          </p>
+        </fieldset>
+      ) : null}
     </div>
   );
 }

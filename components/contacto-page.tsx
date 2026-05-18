@@ -18,7 +18,7 @@ const inputClass =
 
 type ContactFormStatus = "idle" | "submitting" | "success" | "error";
 
-export function ContactoPage() {
+export function ContactoPage({ contentHtml }: { contentHtml?: string | null }) {
   const [status, setStatus] = useState<ContactFormStatus>("idle");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -76,34 +76,41 @@ export function ContactoPage() {
             <span className="italic text-foreground/85">Información</span>{" "}
             <span className="font-semibold not-italic">de contacto</span>
           </h2>
-          <dl className="space-y-6">
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Celular
-              </dt>
-              <dd className="mt-1">
-                <a
-                  href={siteContactTelHref()}
-                  className="text-base font-medium text-foreground underline-offset-4 transition hover:underline"
-                >
-                  {SITE_CONTACT_PHONE_DISPLAY}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Email
-              </dt>
-              <dd className="mt-1">
-                <a
-                  href={siteContactMailtoHref()}
-                  className="break-all text-base font-medium text-foreground underline-offset-4 transition hover:underline"
-                >
-                  {SITE_CONTACT_EMAIL}
-                </a>
-              </dd>
-            </div>
-          </dl>
+          {contentHtml ? (
+            <div
+              className="space-y-6 [&_a]:break-all [&_a]:text-base [&_a]:font-medium [&_a]:text-foreground [&_a]:underline-offset-4 [&_a]:transition hover:[&_a]:underline [&_br]:hidden [&_p]:space-y-1 [&_p]:text-base [&_p]:font-medium [&_p]:text-foreground [&_strong]:block [&_strong]:text-xs [&_strong]:font-semibold [&_strong]:uppercase [&_strong]:tracking-wide [&_strong]:text-muted-foreground"
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
+          ) : (
+            <dl className="space-y-6">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Celular
+                </dt>
+                <dd className="mt-1">
+                  <a
+                    href={siteContactTelHref()}
+                    className="text-base font-medium text-foreground underline-offset-4 transition hover:underline"
+                  >
+                    {SITE_CONTACT_PHONE_DISPLAY}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Email
+                </dt>
+                <dd className="mt-1">
+                  <a
+                    href={siteContactMailtoHref()}
+                    className="break-all text-base font-medium text-foreground underline-offset-4 transition hover:underline"
+                  >
+                    {SITE_CONTACT_EMAIL}
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          )}
         </section>
 
         <section
